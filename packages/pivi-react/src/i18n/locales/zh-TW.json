@@ -1215,6 +1215,18 @@
       }
     },
     "permissions": {
+      "editScope": "編輯範圍",
+      "editScopeFor": "編輯 {label} 的授權範圍",
+      "revokeAction": "撤銷",
+      "enabledFor": "啟用 {label}",
+      "enabled": "已啟用",
+      "disabled": "已停用",
+      "replaceScope": "替換 {label}",
+      "previewScope": "預覽範圍",
+      "previewResult": "將儲存的範圍：{scopes}",
+      "riskWarning": "請仔細檢查。此範圍可以執行程式碼或安裝套件。",
+      "clearAll": "清除所有持久權限",
+      "confirmClear": "確認清除",
       "heading": "持久權限",
       "intro": "這些裝置本機授權會跨聊天保留。關閉工具不會刪除紀錄。一律允許的決定和目錄存取都列在這裡。",
       "revoke": "撤銷 {label}",

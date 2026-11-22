@@ -5,6 +5,7 @@ export interface InlineAskQuestionConfig {
   headerEl?: HTMLElement;
   showCustomInput?: boolean;
   immediateSelect?: boolean;
+  disabledOptionValues?: readonly string[];
 }
 
 type InlineAskQuestionResolvedConfig = Required<Omit<InlineAskQuestionConfig, 'headerEl'>> & {

@@ -262,7 +262,7 @@ jest.mock('@earendil-works/pi-agent-core', () => ({
       steer: jest.fn(),
       abort: jest.fn(),
       reset: jest.fn(),
-      sessionId: undefined,
+      sessionId: typeof options.sessionId === 'string' ? options.sessionId : undefined,
     };
     mockAgentInstances.push(instance);
     return instance;
@@ -352,6 +352,7 @@ import type {
   PiBaseToolProvider,
   PiMainOnlyToolProvider,
 } from '@pivi/engine-pi/tools/buildPiToolRegistryCore';
+import { cleanupSessionResources } from '@earendil-works/pi-ai';
 import { SessionTreeStore } from '@pivi/engine-pi/session/sessionTreeStore';
 import { PIVI_MESSAGE_UI } from '@pivi/agent/session';
 import { TOOL_OBSIDIAN_READ_EXTERNAL, TOOL_SPAWN_AGENT, type ToolSpec } from '@pivi/agent/tools';
@@ -482,6 +483,20 @@ describe('PiChatRuntime system prompt', () => {
     expect(agent.initialState.systemPrompt).not.toContain('Vault absolute path:');
     expect(agent.initialState.systemPrompt).not.toContain('/test/vault');
     expect(agent.options).not.toHaveProperty('getApiKey');
+  });
+
+  it('releases provider resources for the discarded session on cleanup', async () => {
+    jest.mocked(cleanupSessionResources).mockClear();
+    const runtime = createRuntime(createMockPlugin());
+    await runtime.ensureReady();
+    const sessionId = runtime.getSessionId();
+    expect(sessionId).toEqual(expect.any(String));
+
+    runtime.cleanup();
+    runtime.cleanup();
+
+    expect(cleanupSessionResources).toHaveBeenCalledTimes(1);
+    expect(cleanupSessionResources).toHaveBeenCalledWith(sessionId);
   });
 
   it('uses an injected provider model, auth gate, and stream without consulting settings', async () => {

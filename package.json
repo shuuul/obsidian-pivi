@@ -1,6 +1,6 @@
 {
   "name": "pivi",
-  "version": "0.32.2",
+  "version": "0.33.0",
   "description": "Pivi - Pi agent embedded in Obsidian sidebar",
   "main": "main.js",
   "scripts": {
@@ -82,10 +82,10 @@
   "dependencies": {
     "@codemirror/state": "^6.7.6",
     "@codemirror/view": "^6.43.15",
-    "@earendil-works/pi-agent-core": "1.4.0",
-    "@earendil-works/pi-ai": "1.4.0",
-    "@earendil-works/pi-coding-agent": "1.4.0",
-    "@earendil-works/pi-mcp": "1.4.0",
+    "@earendil-works/pi-agent-core": "1.6.0",
+    "@earendil-works/pi-ai": "1.6.0",
+    "@earendil-works/pi-coding-agent": "1.6.0",
+    "@earendil-works/pi-mcp": "1.6.0",
     "@lobehub/icons-static-svg": "^1.97.0",
     "@tanstack/react-virtual": "^3.14.21",
     "react": "^19.3.1",
@@ -99,8 +99,11 @@
       "@earendil-works/pi-ai": "$@earendil-works/pi-ai",
       "@earendil-works/pi-mcp": "$@earendil-works/pi-mcp"
     },
-    "fast-uri": "3.1.8",
-    "moment": "^2.31.0"
+    "fast-uri": "3.1.9",
+    "glob@>=9 <14.0.2": "14.0.6",
+    "minimatch@>=7 <11.0.1": "11.0.9",
+    "moment": "^2.31.0",
+    "zod": "4.6.6"
   },
   "workspaces": [
     "packages/*"

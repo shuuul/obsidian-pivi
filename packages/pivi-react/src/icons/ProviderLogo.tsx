@@ -31,6 +31,7 @@ import { type CSSProperties, useEffect, useRef } from 'react';
 
 import anysearchSvg from '../../../../assets/icons/anysearch.svg';
 import llamaCppSvg from '../../../../assets/icons/llama-cpp.svg';
+import magpieSvg from '../../../../assets/icons/magpie.svg';
 
 function svgToDataUri(svg: string): string {
   return `data:image/svg+xml,${encodeURIComponent(svg)}`;
@@ -52,6 +53,7 @@ export const PROVIDER_LOGOS: Readonly<Record<string, string>> = {
   kimi: svgToDataUri(kimiSvg),
   lmstudio: svgToDataUri(lmstudioSvg),
   'llama-cpp': svgToDataUri(llamaCppSvg),
+  magpie: svgToDataUri(magpieSvg),
   meta: svgToDataUri(metaSvg),
   microsoft: svgToDataUri(microsoftSvg),
   minimax: svgToDataUri(minimaxSvg),

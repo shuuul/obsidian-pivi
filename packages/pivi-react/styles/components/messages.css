@@ -15,8 +15,13 @@
   pointer-events: none;
   inset-inline: 0;
   inset-block-end: 0;
-  height: 64px;
-  background: linear-gradient(to bottom, transparent, var(--pivi-host-background-primary));
+  height: 88px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in srgb, var(--pivi-chat-background) 64%, transparent) 35%,
+    var(--pivi-chat-background) 72%
+  );
 }
 
 .pivi-messages-bottom-controls {

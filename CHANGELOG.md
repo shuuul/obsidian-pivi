@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.33.0](https://github.com/shuuul/obsidian-pivi/compare/0.32.2...0.33.0) (2026-11-22)
+
+### Features
+
+* add Magpie as a local model provider under Settings → Models, with model discovery and support for its Chat Completions, Responses, and Anthropic Messages routes
+* preview and edit persistent Bash permission scopes in Built-in tools, enable or disable Bash and external-directory grants, and revoke grants individually or clear each list with confirmation
+
+### Bug Fixes
+
+* show capability approvals above the composer so the current draft remains accessible, and disable persistent approval for unsupported Bash syntax
+* improve keyboard focus in inline questions and blend the session switcher fade into the active Obsidian theme
+
+### Maintenance
+
+* update the pinned Pi runtime to 1.6.0, release provider resources when a chat agent is discarded, and resolve dependency audit findings
+
 ## [0.32.2](https://github.com/shuuul/obsidian-pivi/compare/0.32.1...0.32.2) (2026-10-22)
 
 ### Maintenance

@@ -94,6 +94,7 @@
   width: auto;
 }
 
+.pivi-settings-permission-list,
 .pivi-settings-row--stacked > .pivi-settings-row__control > textarea {
   flex: 1 1 100%;
 }

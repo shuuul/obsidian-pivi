@@ -305,8 +305,12 @@ describe('React tools settings', () => {
     const saveSettings = jest.fn(async () => undefined);
     renderTools(createPorts({ saveSettings }));
     const input = screen.getByRole('textbox', { name: 'Add a classified bash command' });
-    fireEvent.change(input, { target: { value: 'git status' } });
+    fireEvent.change(input, { target: { value: 'git status -- example.md' } });
     fireEvent.keyDown(input, { key: 'Enter' });
+    expect(screen.getByRole('status')).toHaveTextContent('Scope to save: git status');
+    expect(screen.getByRole('status')).not.toHaveTextContent('example.md');
+    expect(saveSettings).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     await act(async () => undefined);
     expect(saveSettings).toHaveBeenLastCalledWith({
       bashPermissions: [{
@@ -373,7 +377,7 @@ describe('React tools settings', () => {
     });
     expect(saveSettings).toHaveBeenCalledTimes(1);
   });
-  it('renders persistent grants as badges inside the input fields', async () => {
+  it('shows disabled grants and supports scope edits, per-record toggles, revoke and clear confirmation', async () => {
     const saveSettings = jest.fn(async () => undefined);
     const ports = createPorts({ saveSettings });
     ports.complex.tools.getSettings = () => ({
@@ -388,7 +392,7 @@ describe('React tools settings', () => {
         kind: 'subcommand',
         executable: { kind: 'name', value: 'git' },
         subcommand: 'status',
-        enabled: true,
+        enabled: false,
       }],
       allowExternalRead: false,
       externalDirectories: [{ realpath: '/Users/me/workspace', enabled: true }],
@@ -399,9 +403,31 @@ describe('React tools settings', () => {
     expect(permissions).not.toBeNull();
     expect(within(permissions!).getByRole('button', { name: 'Revoke git status' })).toBeInTheDocument();
     expect(within(permissions!).getByRole('button', { name: 'Revoke /Users/me/workspace' })).toBeInTheDocument();
-    fireEvent.click(within(permissions!).getByRole('button', { name: 'Revoke git status' }));
+    expect(within(permissions!).getByText('Disabled')).toBeVisible();
+    expect(within(permissions!).getByRole('checkbox', { name: 'Enable git status' })).not.toBeChecked();
+    fireEvent.click(within(permissions!).getByRole('button', { name: 'Edit scope for git status' }));
+    const input = within(permissions!).getByRole('textbox', { name: 'Replace git status' });
+    fireEvent.change(input, { target: { value: 'git' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(within(permissions!).getByRole('status')).toHaveTextContent('This grants every command');
+    expect(saveSettings).not.toHaveBeenCalled();
+    fireEvent.click(within(permissions!).getByRole('button', { name: 'Save' }));
     await act(async () => undefined);
-    expect(saveSettings).toHaveBeenCalledWith({ bashPermissions: [] });
+    expect(saveSettings).toHaveBeenLastCalledWith({
+      bashPermissions: [{ kind: 'executable', executable: { kind: 'name', value: 'git' }, enabled: false }],
+    });
+    fireEvent.click(within(permissions!).getByRole('checkbox', { name: 'Enable git' }));
+    await act(async () => undefined);
+    expect(within(permissions!).getByRole('checkbox', { name: 'Enable git' })).toBeChecked();
+    fireEvent.click(within(permissions!).getByRole('button', { name: 'Revoke git' }));
+    await act(async () => undefined);
+    expect(saveSettings).toHaveBeenLastCalledWith({ bashPermissions: [] });
+    fireEvent.click(within(permissions!).getByRole('button', { name: 'Clear' }));
+    expect(saveSettings).toHaveBeenCalledTimes(3);
+    fireEvent.click(within(permissions!).getByRole('button', { name: 'Confirm clear' }));
+    await act(async () => undefined);
+    expect(saveSettings).toHaveBeenLastCalledWith({ bashPermissions: [], externalDirectories: [] });
+    expect(within(permissions!).getByRole('button', { name: 'Clear' })).toBeDisabled();
   });
   it('preserves Unix and Windows filesystem roots', async () => {
     const saveSettings = jest.fn(async () => undefined);

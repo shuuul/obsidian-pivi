@@ -26,6 +26,7 @@ const MODEL_PROVIDER_SETUP_LINKS: Readonly<Record<string, ProviderSetupLink>> = 
   ollama: { href: 'https://ollama.com/download', kind: 'download' },
   lmstudio: { href: 'https://lmstudio.ai/download', kind: 'download' },
   'llama-cpp': { href: 'https://github.com/ggml-org/llama.cpp', kind: 'download' },
+  magpie: { href: 'https://github.com/yetone/magpie', kind: 'download' },
 };
 
 /** Console or product page for a web-search provider id. */

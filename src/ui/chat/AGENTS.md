@@ -55,7 +55,7 @@ flowchart TD
 
 ## Subdirectory map
 
-Pivi management confirmation is a dedicated per-tab, one-shot bridge under `composer/`. Session switches, cancellation, and disposal settle it as cancel; it never exposes capability session/always grants. Capability approval prompts (`capabilityApprovalPrompt.ts`) present Deny / Allow once / Always in one surface; Always persists classifier-produced scopes and never creates a session-duration grant.
+Pivi management confirmation is a dedicated per-tab, one-shot bridge under `composer/`. Session switches, cancellation, and disposal settle it as cancel; it never exposes capability session/always grants. Capability approval prompts (`capabilityApprovalPrompt.ts`) present Deny / Allow once / Always in one surface; Always persists classifier-produced scopes and never creates a session-duration grant. The capability card appears immediately above the visible composer. When the original command cannot be reduced to persistent scopes, Always remains visible and disabled for pointer and keyboard activation.
 
 | Directory | Responsibility | Local guidance |
 |---|---|---|

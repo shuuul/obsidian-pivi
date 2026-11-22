@@ -1107,6 +1107,50 @@ describe('installPiCustomProviders model mapping', () => {
 });
 
 describe('fetchCustomProviderModels local metadata', () => {
+  it('discovers Magpie routes and retains their native protocols and model metadata', async () => {
+    const request = jest.fn().mockResolvedValue({
+      status: 200,
+      body: JSON.stringify({ data: [
+        {
+          id: 'codex/gpt-6.2-sol',
+          magpie_label: 'GPT-6.2 Sol · Codex',
+          native_endpoints: ['/v1/responses'],
+          context_length: 272000,
+          max_output_tokens: 128000,
+          modalities: { input: ['text', 'image', 'pdf'] },
+          reasoning_levels: ['low', 'high', 'max', 'ultra'],
+        },
+        { id: 'devin/claude', native_endpoints: ['/v1/messages'] },
+        { id: 'group/default', reasoning_levels: ['none', 'high'] },
+      ] }),
+    });
+    const config = createDefaultCustomProviderConfig('magpie', []);
+    const result = await fetchCustomProviderModels(config, request);
+    const restored = normalizeCustomProviderConfig({ ...config, models: result.models });
+    if (!restored) throw new Error('Expected persisted Magpie settings');
+    const models = buildCustomPiProvider(restored).getModels();
+
+    expect(request).toHaveBeenCalledWith('http://127.0.0.1:3425/v1/models', {
+      headers: { Accept: 'application/json' },
+    });
+    expect(restored.apiKeyRequired).toBe(false);
+    expect(models).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: 'codex/gpt-6.2-sol', name: 'GPT-6.2 Sol · Codex', provider: 'magpie',
+        api: 'openai-responses', baseUrl: 'http://127.0.0.1:3425/v1',
+        contextWindow: 272000, maxTokens: 128000, input: ['text', 'image'],
+        reasoning: true,
+        thinkingLevelMap: expect.objectContaining({ off: null, low: 'low', high: 'high', max: 'max' }),
+      }),
+      expect.objectContaining({
+        id: 'devin/claude', api: 'anthropic-messages', baseUrl: 'http://127.0.0.1:3425',
+      }),
+      expect.objectContaining({
+        id: 'group/default', api: 'openai-completions', baseUrl: 'http://127.0.0.1:3425/v1',
+        thinkingLevelMap: expect.objectContaining({ off: 'none', high: 'high' }),
+      }),
+    ]));
+  });
   it('uses Ollama num_ctx ahead of model architecture metadata', async () => {
     const request = jest.fn(async (url: string) => {
       if (url.endsWith('/api/tags')) {

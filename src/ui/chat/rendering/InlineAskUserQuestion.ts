@@ -54,6 +54,7 @@ export class InlineAskUserQuestion {
       headerEl: config?.headerEl,
       showCustomInput: config?.showCustomInput ?? true,
       immediateSelect: config?.immediateSelect ?? false,
+      disabledOptionValues: config?.disabledOptionValues ?? [],
     };
     this.boundKeyDown = createInlineAskKeyDownHandler(this);
   }
@@ -133,6 +134,7 @@ export class InlineAskUserQuestion {
     if (!q || !selected) return;
     const isMulti = q.multiSelect;
     const optionValue = this.getOptionValue(option);
+    if (this.config.disabledOptionValues.includes(optionValue)) return;
 
     if (isMulti) {
       if (selected.has(optionValue)) {

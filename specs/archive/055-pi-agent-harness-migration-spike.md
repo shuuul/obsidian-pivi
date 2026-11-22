@@ -1,9 +1,9 @@
 ---
 id: "055"
 title: "Pi AgentHarness migration spike"
-status: Active
+status: Completed
 created: 2026-09-29
-updated: 2026-09-29
+updated: 2026-11-22
 coordinator: "Claude Code (refactor/pi-compat-and-architecture)"
 ---
 
@@ -55,6 +55,7 @@ Not in scope:
 |---|---|---|---|
 | 2026-09-29 | Do not migrate at `0.87.1`; run a spike first. | `watchSession` is unimplemented and suspended-run drive is not public, and the v4 format is not readable by current `SessionManager`, so a production migration now would be one-way for users' session files. | WS-01–WS-05 |
 | 2026-09-29 | Prototype code stays under `tests/` or a clearly unexported engine module until a go decision. | Keeps the production composition boundary (`application/*`) and bundle unchanged during evaluation. | WS-01 |
+| 2026-11-22 | Keep the current session store and runtime. Reopen the architecture question only for an explicit cross-restart task-resume feature. | Pi 1.6.0 no longer exports the proposed `AgentHarness` and `JsonlStorage` from pi-agent-core. The separate experimental `pi-durable` package changes the runtime and storage contract. | WS-01–WS-06 |
 
 ## Workstreams
 
@@ -91,6 +92,13 @@ Not in scope:
 - Blockers: None for the spike; production migration is blocked on upstream harness completeness.
 - Next action: WS-01 prototype.
 
+### 2026-11-22 — Closeout review
+
+- The installed Pi 1.6.0 `pi-agent-core` package exposes only its root and `package.json`, and its distribution has no harness implementation. The proposed drop-in v3-to-v4 path therefore does not exist at the current pin.
+- Pi publishes the separate experimental package `@earendil-works/pi-durable`. Its `Harness` stores task checkpoints, submissions, transcript entries, and typed documents. Its JSONL backend stores a directory of commit logs and sidecars under a single writer, with a read-only open for viewers. A Pivi adoption would need an explicit import boundary, storage ownership and cloud-sync decisions, and replay policies for vault mutations and remote calls. The v3 fixture and bundle acceptance for the historical core APIs cannot carry forward to that different package.
+- `Harness.open()` opens the session. The scheduler starts via `resume()`, `submit()`, or `wait()`. Automatic work on Obsidian startup would require an explicit Pivi integration. A sleeping task stores its checkpoint, and the host controls when scheduling resumes. A fully closed Obsidian can only have work continue if an external host drives it.
+- Pivi now already uses `Agent.steer()` through `piChatRuntime.ts`, `piChatRuntimeTools.ts`, and `inputQueueRestore.ts`. Keep the existing FIFO and explicit steering paths for chat.
+
 ## Completion summary
 
-Pending.
+The migration decision is complete. WS-01 through WS-04 were superseded by the removal of the core harness. The prototype, fixture conversions, bundle measurement, and responsibility map for that API were not carried out at the 1.6 pin. WS-05 closes with the recommendation to retain FIFO and explicit steering, and WS-06 closes with the decision and handbook updates. The compatibility manifest continues to describe the existing v3 seam.

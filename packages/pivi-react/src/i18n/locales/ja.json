@@ -1215,6 +1215,18 @@
       }
     },
     "permissions": {
+      "editScope": "範囲を編集",
+      "editScopeFor": "{label} の範囲を編集",
+      "revokeAction": "取り消す",
+      "enabledFor": "{label} を有効にする",
+      "enabled": "有効",
+      "disabled": "無効",
+      "replaceScope": "{label} を置換",
+      "previewScope": "範囲をプレビュー",
+      "previewResult": "保存する範囲：{scopes}",
+      "riskWarning": "よく確認してください。この権限ではコードの実行やパッケージのインストールが可能です。",
+      "clearAll": "すべての永続権限を消去",
+      "confirmClear": "消去を確認",
       "heading": "永続権限",
       "intro": "これらの端末ローカル権限はチャットをまたいで残ります。ツールをオフにしても記録は消えません。常に許可の決定とディレクトリアクセスはここに表示されます。",
       "revoke": "{label} を取り消す",

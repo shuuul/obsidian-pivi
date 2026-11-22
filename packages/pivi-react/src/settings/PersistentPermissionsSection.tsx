@@ -1,7 +1,6 @@
 import {
   classifyBashCommand,
   formatBashPermissionLabel,
-  looksLikeLegacyBashEncoding,
   type PersistentBashPermission,
   type PersistentExternalDirectoryPermission,
 } from '@pivi/agent/tools';
@@ -9,7 +8,7 @@ import { useRef, useState } from 'react';
 
 import { useT } from '../i18n';
 import type { SettingsFeedbackMessage, SettingsPorts } from '../ports';
-import { BadgeListInput, SettingRow, SettingsSection } from './primitives';
+import { BadgeListInput, SettingRow, SettingsFeedback, SettingsSection, Toggle } from './primitives';
 
 function parseDirectories(inputs: readonly string[]): { directories: string[]; error?: string } {
   const directories: string[] = [];
@@ -50,6 +49,11 @@ export function PersistentPermissionsSection({
   const [bashFeedback, setBashFeedback] = useState<SettingsFeedbackMessage | null>(null);
   const [directoryFeedback, setDirectoryFeedback] = useState<SettingsFeedbackMessage | null>(null);
   const operation = useRef(false);
+  const bashInput = useRef<HTMLInputElement>(null);
+  const [command, setCommand] = useState('');
+  const [editing, setEditing] = useState<PersistentBashPermission | null>(null);
+  const [preview, setPreview] = useState<{ scopes: PersistentBashPermission[]; warning: boolean } | null>(null);
+  const [confirmClear, setConfirmClear] = useState(false);
 
   const persist = async (patch: Parameters<SettingsPorts['complex']['tools']['saveSettings']>[0]): Promise<boolean> => {
     try {
@@ -76,56 +80,56 @@ export function PersistentPermissionsSection({
     }
   };
 
-  const addBashCommands = async (entries: readonly string[]): Promise<boolean> => {
+  const resetBashDraft = () => {
+    setCommand('');
+    setEditing(null);
+    setPreview(null);
     setBashFeedback(null);
-    return await runOperation(async () => {
-      const next = [...bashPermissions];
-      let changed = false;
-      for (const entry of entries) {
-        const trimmed = entry.trim();
-        if (!trimmed) continue;
-        if (looksLikeLegacyBashEncoding(trimmed)) {
-          setBashFeedback({ kind: 'error', message: t('settings.permissions.bash.legacyEncoding') });
-          return false;
-        }
-        const classification = classifyBashCommand(trimmed);
-        if (!classification.persistable) {
-          const reason = classification.reason === 'unresolved-relative'
-            ? t('settings.permissions.bash.unresolvedRelative')
-            : classification.reason === 'legacy-encoding'
-              ? t('settings.permissions.bash.legacyEncoding')
-              : t('settings.permissions.bash.unsafeSyntax');
-          setBashFeedback({ kind: 'error', message: reason });
-          return false;
-        }
-        for (const component of classification.components) {
-          const permission = { ...component.recommended, enabled: true };
-          const existingIndex = next.findIndex(existing => bashIdentityKey(existing) === bashIdentityKey(permission));
-          if (existingIndex >= 0) {
-            if (!next[existingIndex]!.enabled) {
-              next[existingIndex] = permission;
-              changed = true;
-            }
-            continue;
-          }
-          next.push(permission);
-          changed = true;
-        }
-      }
-      if (!changed) return true;
-      if (!await persist({ bashPermissions: next })) return false;
-      setBashPermissions(next);
-      return true;
-    }) ?? false;
   };
 
-  const removeBashLabel = async (label: string): Promise<void> => {
-    await runOperation(async () => {
-      const next = bashPermissions.filter(permission => formatBashPermissionLabel(permission) !== label);
-      if (next.length === bashPermissions.length) return;
-      if (!await persist({ bashPermissions: next })) return;
-      setBashPermissions(next);
+  const previewBashCommand = () => {
+    const trimmed = command.trim();
+    if (!trimmed) return;
+    const classification = classifyBashCommand(trimmed);
+    if (!classification.persistable) {
+      const reason = classification.reason;
+      setBashFeedback({
+        kind: 'error',
+        message: reason === 'unresolved-relative'
+          ? t('settings.permissions.bash.unresolvedRelative')
+          : reason === 'legacy-encoding'
+            ? t('settings.permissions.bash.legacyEncoding')
+            : t('settings.permissions.bash.unsafeSyntax'),
+      });
+      return;
+    }
+    const scopes = new Map<string, PersistentBashPermission>();
+    for (const component of classification.components) {
+      const permission = { ...component.recommended, enabled: editing?.enabled ?? true };
+      scopes.set(bashIdentityKey(permission), permission);
+    }
+    setBashFeedback(null);
+    setPreview({
+      scopes: [...scopes.values()],
+      warning: classification.components.some(component => component.risk !== 'none'),
     });
+  };
+
+  const saveBashPermissions = async (next: readonly PersistentBashPermission[]) => runOperation(async () => {
+    if (!await persist({ bashPermissions: [...next] })) return false;
+    setBashPermissions(next);
+    return true;
+  });
+
+  const saveBashPreview = async () => {
+    if (!preview) return;
+    const next = new Map(bashPermissions.map(permission => [bashIdentityKey(permission), permission]));
+    if (editing) next.delete(bashIdentityKey(editing));
+    for (const permission of preview.scopes) {
+      const key = bashIdentityKey(permission);
+      if (!editing || !next.has(key)) next.set(key, permission);
+    }
+    if (await saveBashPermissions([...next.values()])) resetBashDraft();
   };
 
   const addDirectories = async (entries: readonly string[]): Promise<boolean> => {
@@ -139,7 +143,8 @@ export function PersistentPermissionsSection({
         }) });
         return false;
       }
-      for (const path of parsed.directories) {
+      const added = parseDirectories(entries).directories;
+      for (const path of added) {
         const validation = await ports.complex.tools.validateExternalDirectory(path);
         if (!validation.valid) {
           setDirectoryFeedback({
@@ -149,21 +154,29 @@ export function PersistentPermissionsSection({
           return false;
         }
       }
-      const next = parsed.directories.map((realpath) => (
-        { realpath, enabled: true }
-      ));
+      const next = parsed.directories.map((realpath) => ({
+        realpath,
+        enabled: added.includes(realpath) || (externalDirectories.find(directory => directory.realpath === realpath)?.enabled ?? true),
+      }));
       if (!await persist({ externalDirectories: next })) return false;
       setExternalDirectories(next);
       return true;
     }) ?? false;
   };
 
-  const removeDirectory = async (realpath: string): Promise<void> => {
+  const saveDirectories = async (next: readonly PersistentExternalDirectoryPermission[]) => {
     await runOperation(async () => {
-      const next = externalDirectories.filter(directory => directory.realpath !== realpath);
-      if (next.length === externalDirectories.length) return;
-      if (!await persist({ externalDirectories: next })) return;
-      setExternalDirectories(next);
+      if (await persist({ externalDirectories: [...next] })) setExternalDirectories(next);
+    });
+  };
+
+  const clearPermissions = async () => {
+    await runOperation(async () => {
+      if (!await persist({ bashPermissions: [], externalDirectories: [] })) return;
+      setBashPermissions([]);
+      setExternalDirectories([]);
+      setConfirmClear(false);
+      resetBashDraft();
     });
   };
 
@@ -184,26 +197,100 @@ export function PersistentPermissionsSection({
     <SettingsSection title={t('settings.permissions.heading')}>
       <p className="pivi-setting-description">{t('settings.permissions.intro')}</p>
       <SettingRow stacked name={t('settings.permissions.bash.name')} description={t('settings.permissions.bash.desc')}>
-        <BadgeListInput
-          values={bashPermissions.map(formatBashPermissionLabel)}
-          inputLabel={t('settings.permissions.bash.inputLabel')}
-          removeLabel={(label) => t('settings.permissions.revoke', { label })}
+        {bashPermissions.length > 0 && (
+          <div className="pivi-settings-permission-list">
+            {bashPermissions.map(permission => {
+              const label = formatBashPermissionLabel(permission);
+              return (
+                <SettingRow key={bashIdentityKey(permission)} name={label}
+                  description={t(permission.enabled ? 'settings.permissions.enabled' : 'settings.permissions.disabled')}>
+                  <button type="button" aria-label={t('settings.permissions.editScopeFor', { label })} disabled={pending} onClick={() => {
+                    resetBashDraft();
+                    setEditing(permission);
+                    bashInput.current?.focus();
+                  }}>
+                    {t('settings.permissions.editScope')}
+                  </button>
+                  <button type="button" aria-label={t('settings.permissions.revoke', { label })} disabled={pending} onClick={() => {
+                    if (editing === permission) resetBashDraft();
+                    void saveBashPermissions(bashPermissions.filter(item => item !== permission));
+                  }}>
+                    {t('settings.permissions.revokeAction')}
+                  </button>
+                  <Toggle checked={permission.enabled} disabled={pending} label={t('settings.permissions.enabledFor', { label })} onChange={(enabled) => {
+                    if (editing === permission) resetBashDraft();
+                    void saveBashPermissions(bashPermissions.map(item => item === permission ? { ...item, enabled } : item));
+                  }} />
+                </SettingRow>
+              );
+            })}
+          </div>
+        )}
+        {editing && <span>{t('settings.permissions.replaceScope', { label: formatBashPermissionLabel(editing) })}</span>}
+        <input
+          ref={bashInput}
+          className="pivi-settings-control"
+          aria-label={editing
+            ? t('settings.permissions.replaceScope', { label: formatBashPermissionLabel(editing) })
+            : t('settings.permissions.bash.inputLabel')}
           disabled={pending}
-          feedback={bashFeedback}
-          onAdd={addBashCommands}
-          onRemove={removeBashLabel}
+          value={command}
+          onChange={(event) => {
+            setCommand(event.target.value);
+            setPreview(null);
+            setBashFeedback(null);
+          }}
+          onKeyDown={(event) => {
+            if (event.key !== 'Enter' || event.nativeEvent.isComposing) return;
+            event.preventDefault();
+            previewBashCommand();
+          }}
         />
+        <button type="button" disabled={pending || !command.trim()} onClick={previewBashCommand}>
+          {t('settings.permissions.previewScope')}
+        </button>
+        <SettingsFeedback feedback={bashFeedback} />
+        {preview && (
+          <>
+            <div role="status">
+              {t('settings.permissions.previewResult', { scopes: preview.scopes.map(formatBashPermissionLabel).join(', ') })}
+              {preview.warning && <p>{t('settings.permissions.riskWarning')}</p>}
+              {editing?.kind === 'subcommand' && preview.scopes.some(scope => scope.kind === 'executable'
+                && scope.executable.kind === editing.executable.kind && scope.executable.value === editing.executable.value)
+                && <p>{t('chat.capabilityApproval.broaderWarning')}</p>}
+            </div>
+            <button type="button" disabled={pending} onClick={() => { void saveBashPreview(); }}>{t('common.save')}</button>
+          </>
+        )}
+        {(editing || preview) && <button type="button" disabled={pending} onClick={resetBashDraft}>{t('common.cancel')}</button>}
       </SettingRow>
       <SettingRow stacked name={t('settings.permissions.external.name')} description={t('settings.permissions.external.desc')}>
+        {externalDirectories.length > 0 && (
+          <div className="pivi-settings-permission-list">
+            {externalDirectories.map(directory => {
+              const label = directory.realpath;
+              return (
+                <SettingRow key={label} name={label}
+                  description={t(directory.enabled ? 'settings.permissions.enabled' : 'settings.permissions.disabled')}>
+                  <button type="button" aria-label={t('settings.permissions.revoke', { label })} disabled={pending} onClick={() => {
+                    void saveDirectories(externalDirectories.filter(item => item !== directory));
+                  }}>
+                    {t('settings.permissions.revokeAction')}
+                  </button>
+                  <Toggle checked={directory.enabled} disabled={pending} label={t('settings.permissions.enabledFor', { label })} onChange={(enabled) => {
+                    void saveDirectories(externalDirectories.map(item => item === directory ? { ...item, enabled } : item));
+                  }} />
+                </SettingRow>
+              );
+            })}
+          </div>
+        )}
         <BadgeListInput
-          values={externalDirectories.map(directory => directory.realpath)}
           placeholder={t('settings.externalRead.directories.placeholder')}
           inputLabel={t('settings.externalRead.directories.inputLabel')}
-          removeLabel={(value) => t('settings.permissions.revoke', { label: value })}
           disabled={pending}
           feedback={directoryFeedback}
           onAdd={addDirectories}
-          onRemove={removeDirectory}
         />
         <button
           type="button"
@@ -214,6 +301,20 @@ export function PersistentPermissionsSection({
         >
           {t('settings.externalRead.directories.browse')}
         </button>
+      </SettingRow>
+      <SettingRow name={t('settings.permissions.clearAll')}>
+        {confirmClear ? (
+          <>
+            <button type="button" disabled={pending} onClick={() => { void clearPermissions(); }}>
+              {t('settings.permissions.confirmClear')}
+            </button>
+            <button type="button" disabled={pending} onClick={() => setConfirmClear(false)}>{t('common.cancel')}</button>
+          </>
+        ) : (
+          <button type="button" disabled={pending || bashPermissions.length + externalDirectories.length === 0} onClick={() => setConfirmClear(true)}>
+            {t('common.clear')}
+          </button>
+        )}
       </SettingRow>
     </SettingsSection>
   );

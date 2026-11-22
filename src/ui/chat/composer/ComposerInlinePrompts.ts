@@ -51,8 +51,6 @@ export class ComposerInlinePrompts {
       this.deps,
       request,
       (inline) => { this.pendingAskInline = inline; },
-      (el) => this.hideInputContainer(el),
-      (el) => this.restoreInputContainer(el),
     );
   }
 

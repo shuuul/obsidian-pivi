@@ -19,6 +19,7 @@ export type CustomProviderKind =
   | 'ollama'
   | 'lmstudio'
   | 'llama-cpp'
+  | 'magpie'
   | 'openai-compatible'
   | 'anthropic-compatible'
   | 'openai-responses';
@@ -47,6 +48,8 @@ export interface CustomProviderReasoningMeta {
 export interface CustomProviderModelDef {
   id: string;
   name: string;
+  nativeApi?: CustomProviderApi;
+  input?: ('text' | 'image')[];
   contextWindow?: number;
   maxTokens?: number;
   reasoning?: boolean;
@@ -90,6 +93,7 @@ export const LOCAL_CUSTOM_PROVIDER_KINDS = [
   'ollama',
   'lmstudio',
   'llama-cpp',
+  'magpie',
 ] as const satisfies readonly CustomProviderKind[];
 
 export const MULTI_INSTANCE_CUSTOM_PROVIDER_KINDS = [
@@ -110,12 +114,14 @@ export const FIXED_LOCAL_PROVIDER_IDS: Record<
   ollama: 'ollama',
   lmstudio: 'lmstudio',
   'llama-cpp': 'llama-cpp',
+  magpie: 'magpie',
 };
 
 const DEFAULT_BASE_URLS: Record<CustomProviderKind, string> = {
   ollama: 'http://localhost:11434/v1',
   lmstudio: 'http://localhost:1234/v1',
   'llama-cpp': 'http://localhost:8080/v1',
+  magpie: 'http://127.0.0.1:3425/v1',
   'openai-compatible': '',
   'anthropic-compatible': '',
   'openai-responses': '',
@@ -125,6 +131,7 @@ const KIND_TO_API: Record<CustomProviderKind, CustomProviderApi> = {
   ollama: 'openai-completions',
   lmstudio: 'openai-completions',
   'llama-cpp': 'openai-completions',
+  magpie: 'openai-completions',
   'openai-compatible': 'openai-completions',
   'anthropic-compatible': 'anthropic-messages',
   'openai-responses': 'openai-responses',
@@ -134,6 +141,7 @@ const KIND_DISPLAY_NAMES: Record<CustomProviderKind, string> = {
   ollama: 'Ollama',
   lmstudio: 'LM Studio',
   'llama-cpp': 'llama.cpp',
+  magpie: 'Magpie',
   'openai-compatible': 'OpenAI compatible',
   'anthropic-compatible': 'Anthropic compatible',
   'openai-responses': 'OpenAI Responses',
@@ -366,6 +374,12 @@ function normalizeCustomProviderModelDef(raw: unknown): CustomProviderModelDef |
     return null;
   }
   const name = trimmedNonEmptyString(raw.name) ?? id;
+  const nativeApi = typeof raw.nativeApi === 'string' && isCustomProviderApi(raw.nativeApi)
+    ? raw.nativeApi
+    : undefined;
+  const input = Array.isArray(raw.input) && raw.input.includes('image')
+    ? ['text', 'image'] as const
+    : undefined;
   const contextWindow = positiveInteger(raw.contextWindow);
   const maxTokens = positiveInteger(raw.maxTokens);
   const reasoning = typeof raw.reasoning === 'boolean' ? raw.reasoning : undefined;
@@ -382,6 +396,8 @@ function normalizeCustomProviderModelDef(raw: unknown): CustomProviderModelDef |
   return {
     id,
     name,
+    ...(nativeApi ? { nativeApi } : {}),
+    ...(input ? { input: [...input] } : {}),
     ...(contextWindow !== undefined ? { contextWindow } : {}),
     ...(maxTokens !== undefined ? { maxTokens } : {}),
     ...(reasoning !== undefined ? { reasoning } : {}),

@@ -1215,6 +1215,18 @@
       }
     },
     "permissions": {
+      "editScope": "Geltungsbereich bearbeiten",
+      "editScopeFor": "Geltungsbereich für {label} bearbeiten",
+      "revokeAction": "Widerrufen",
+      "enabledFor": "{label} aktivieren",
+      "enabled": "Aktiviert",
+      "disabled": "Deaktiviert",
+      "replaceScope": "{label} ersetzen",
+      "previewScope": "Geltungsbereich prüfen",
+      "previewResult": "Zu speichernder Geltungsbereich: {scopes}",
+      "riskWarning": "Sorgfältig prüfen. Diese Berechtigung kann Code ausführen oder Pakete installieren.",
+      "clearAll": "Alle dauerhaften Berechtigungen löschen",
+      "confirmClear": "Löschen bestätigen",
       "heading": "Dauerhafte Berechtigungen",
       "intro": "Diese gerätelokalen Freigaben gelten über Chats hinweg. Das Ausschalten eines Tools behält die Einträge. Immer-erlauben-Entscheidungen und Verzeichniszugriff stehen hier.",
       "revoke": "{label} widerrufen",

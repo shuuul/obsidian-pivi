@@ -9,6 +9,7 @@
 }
 
 .pivi-container {
+  --pivi-chat-background: var(--pivi-host-chat-background, var(--pivi-host-background-primary));
   display: flex;
   flex-direction: column;
   height: 100%;

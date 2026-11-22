@@ -3,10 +3,9 @@ import type { AskUserQuestionItem } from '@pivi/agent/tools/types';
 import { updateFocusIndicator } from './inlineAskUserQuestionRender';
 import type { InlineAskUserQuestionHost } from './inlineAskUserQuestionTypes';
 
-function isEditableElement(element: Element | null): element is HTMLElement {
-  if (!(element instanceof HTMLElement)) return false;
-  if (element.isContentEditable) return true;
-  return element.matches('textarea, input, select, [contenteditable="true"]');
+function isEditableElement(element: Element | null): boolean {
+  if (!element) return false;
+  return (element as HTMLElement).isContentEditable || element.matches('textarea, input, select, [contenteditable="true"]');
 }
 
 export function shouldFocusAskUserRoot(ownerDocument: Document): boolean {
@@ -113,8 +112,20 @@ function handleImmediateSelectKeyDown(host: InlineAskUserQuestionHost, e: Keyboa
   const q = host.questions[host.activeTabIndex];
   if (!q) return;
   const maxIdx = q.options.length - 1;
+  if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+    e.preventDefault();
+    e.stopPropagation();
+    const step = e.key === 'ArrowUp' ? -1 : 1;
+    for (let index = host.focusedItemIndex + step; index >= 0 && index <= maxIdx; index += step) {
+      const row = host.currentItems[index];
+      if (!row || row.getAttribute('aria-disabled') === 'true') continue;
+      row.focus();
+      break;
+    }
+    return;
+  }
   if (handleNavigationKey(host, e, maxIdx)) return;
-  if (e.key === 'Enter') {
+  if (e.key === 'Enter' || e.key === ' ') {
     e.preventDefault();
     e.stopPropagation();
     if (host.focusedItemIndex <= maxIdx) {
@@ -155,10 +166,11 @@ function handleDigitShortcut(host: InlineAskUserQuestionHost, e: KeyboardEvent):
   if (optionIndex < q.options.length) {
     e.preventDefault();
     e.stopPropagation();
+    const option = q.options[optionIndex];
+    if (!option || host.config.disabledOptionValues.includes(host.getOptionValue(option))) return true;
     host.focusedItemIndex = optionIndex;
     updateFocusIndicator(host);
-    const option = q.options[optionIndex];
-    if (option) host.selectOption(host.activeTabIndex, option);
+    host.selectOption(host.activeTabIndex, option);
     return true;
   }
   if (host.canShowCustomInputForQuestion(q) && optionIndex === q.options.length) {
@@ -229,6 +241,7 @@ export function handleKeyDown(host: InlineAskUserQuestionHost, e: KeyboardEvent)
   if (handleInputFocusedKeyDown(host, e)) return;
   if (handleDigitShortcut(host, e)) return;
   if (host.config.immediateSelect) {
+    if (isEditableElement(host.rootEl.ownerDocument.activeElement)) return;
     handleImmediateSelectKeyDown(host, e);
     return;
   }

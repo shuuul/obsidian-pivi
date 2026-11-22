@@ -10,11 +10,15 @@ Keep roadmap entries at the priority/outcome level. When an item becomes long-ru
 
 ### Now
 
-- Implement [spec 051](../specs/051-permission-scopes-and-chat-lifecycle-cleanup.md): replace filename-bound Bash approvals with explicit device-local executable/semantic-command scopes, expose persistent permissions in Settings, prevent metadata-only chats from entering history, and make Archived versus Deleted cleanup observable.
 - Complete the two environment-dependent live release-candidate rows: Hover Editor in a vault where that community plugin is installed, and MCP OAuth against a configured test server.
 - Keep typecheck, zero-warning lint, boundaries, coverage, production build, and bundle-size gates green.
 
 ### Recently completed
+
+- **Permission scopes and chat lifecycle cleanup** (spec [051](../specs/archive/051-permission-scopes-and-chat-lifecycle-cleanup.md)). Completed persistent permission and Archive/Delete acceptance in Sandbox.
+- **Composer mention badges** (spec [053](../specs/archive/053-composer-mention-badge-clamp-and-copy-paste-round-trip.md)). Completed acceptance of badge truncation and canonical clipboard round trips.
+
+- **Session runtime migration decision** (spec [055](../specs/archive/055-pi-agent-harness-migration-spike.md)). Keep the current Agent and v3 SessionManager. Pi 1.6 retired the core harness targeted by the spike. The separate experimental `pi-durable` package would need its own evaluation if Pivi takes on cross-restart task recovery.
 
 - **Architecture stability and trustworthy task execution** (spec [050](../specs/archive/050-architecture-review-stability-and-trustworthy-task-execution.md)): repaired deterministic real-host smoke, made fork/shutdown cleanup transactional, measured projection ownership without retaining an unjustified optimization, required File Recovery before supported Trusted-automation mutations, and enforced package dependency/export plus active Markdown-link contracts.
 - **Post-review contracts and community execution** (spec [049](../specs/archive/049-post-review-contracts-architecture-and-community-execution.md)): aligned active MCP docs, protected repository boundaries, narrowed composition/API surfaces, added compatibility and quality signals, and established contribution and funding routes. Archived on 2026-09-04; further stability work belongs to spec 050.
@@ -31,6 +35,7 @@ Keep roadmap entries at the priority/outcome level. When an item becomes long-ru
 
 ### Next
 
+- Prototype an opt-in Desktop Code Mode tool in the main Agent's tool registry. Start with a fixed set of vault-local read and search operations. Dispatch nested calls through Pi's `runToolCall` with Pivi's existing tool guards and read budget. Bound execution time, VM memory, output, and concurrent work. Render the nested call status in the transcript, including cancelled calls. Keep script state scoped to one execution for the first version.
 - Add direct focused coverage for `ExternalContextSelector` validation: duplicates, parent/child overlap, unavailable roots, pinning, and removal.
 - Expand settings hotkey and port-wiring interaction coverage.
 - Decide whether direct sends should capture ambient editor selections like queued turns; today only queued turns capture them automatically, while direct sends require explicit inline context.
@@ -38,12 +43,18 @@ Keep roadmap entries at the priority/outcome level. When an item becomes long-ru
 
 ### Later
 
-- Evaluate pi's codemode (`@earendil-works/pi-codemode`): model-written JavaScript in a QuickJS sandbox that calls tools, including MCP tools, in parallel and returns only the needed result. Prerequisites are confirmed QuickJS WASM loading in Obsidian, measured bundle headroom, and a permission/review design for model-written scripts; Pivi's proxy `mcp` tool already covers large server inventories meanwhile. Deferred from [spec 056](../specs/archive/056-pi-099-upgrade-and-pi-mcp-client.md).
+- Consider MCP exposure and persistent Code Mode state after the initial read-only integration. MCP can change remote state, so deciding which tools to expose depends on the individual tool's behavior and Pivi's approval and trace handling. Persistent script state needs explicit rules for visibility, fork, and session restore. The existing `mcp` proxy remains the entry point for configured servers.
 - Evolve long-session paging, context checkpoints, and the Narrative / Activity / Memory visual language according to [Chat UI evolution](11-chat-ui-evolution.md), promoting only measured and accepted slices into Now or Next.
 - Re-measure bundle composition before changing provider dependencies; keep Google provider/auth code bundled unless a tested replacement shim exists.
 - Split large modules only when the affected behavior is next changed and the extracted boundary has domain meaning.
 - Keep `PiChatService`, `ChatPorts`, React presentation ports, and host ports narrow as capabilities evolve.
 - Periodically reconcile the root quality gates and this roadmap, moving completed items out rather than retaining stale history.
+
+## Desktop Code Mode feasibility
+
+The standalone `@earendil-works/pi-codemode/portable` entry can run QuickJS in an Obsidian Web Worker. In a synthetic probe with Obsidian's macOS renderer (Electron 43.8.9), the default `CodemodeSandbox` Node worker constructor failed. A Blob Web Worker using `serveCodemodeRemote` with `RemoteCodemodeSandbox` in the renderer ran two parallel synthetic tool calls, handled a hard timeout and explicit abort, and accepted a subsequent run. The QuickJS script saw no `process`, `require`, or `fetch`. The renderer owned all tool callbacks, so the host can apply existing Pivi tool validation and permissions before executing each one. An independent Node probe measured about 4.5 seconds of caller-thread blocking for a tight loop at the inline sandbox’s default interrupt budget. The Web Worker keeps that computation off the renderer thread.
+
+The prototype compiled WASM in the renderer and sent the compiled module to a fresh Web Worker per run. Its minified host and worker together occupied 93,642 bytes, with 637,405 bytes of raw QuickJS WASM. A second probe embedded the worker and base64-encoded gzip WASM in one 479,629-byte CommonJS artifact and passed the same renderer checks. The Pi 1.6 production bundle had 866,466 bytes of headroom under the 5 MiB limit. A temporary build using the production esbuild options, the plugin entrypoint, and an exported synthetic probe occupied 4,855,122 bytes after postprocessing, with 387,758 bytes of headroom. The product adapter still needs a full bundle measurement and desktop-host lifecycle verification. Keep `AgentSession` outside the integration. [Upstream Code Mode package](https://github.com/earendil-works/pi/tree/v1.6.0/packages/codemode)
 
 ## 2026-07-16 release-candidate evidence
 

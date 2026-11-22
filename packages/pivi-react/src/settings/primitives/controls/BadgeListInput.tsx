@@ -5,7 +5,7 @@ import type { SettingsFeedbackMessage } from '../../../ports';
 import { SettingsFeedback } from '../SettingsFeedback';
 
 export function BadgeListInput({
-  values,
+  values = [],
   placeholder,
   inputLabel,
   removeLabel,
@@ -14,14 +14,14 @@ export function BadgeListInput({
   onAdd,
   onRemove,
 }: {
-  readonly values: readonly string[];
+  readonly values?: readonly string[];
   readonly placeholder?: string;
   readonly inputLabel: string;
-  readonly removeLabel: (value: string) => string;
+  readonly removeLabel?: (value: string) => string;
   readonly disabled?: boolean;
   readonly feedback?: SettingsFeedbackMessage | null;
   readonly onAdd: (values: readonly string[]) => boolean | Promise<boolean>;
-  readonly onRemove: (value: string) => void | Promise<void>;
+  readonly onRemove?: (value: string) => void | Promise<void>;
 }) {
   const [draft, setDraft] = useState('');
   const [committing, setCommitting] = useState(false);
@@ -36,7 +36,7 @@ export function BadgeListInput({
     }
   };
   const remove = async (value: string) => {
-    if (committing || disabled) return;
+    if (committing || disabled || !onRemove) return;
     setCommitting(true);
     try {
       await onRemove(value);
@@ -57,15 +57,15 @@ export function BadgeListInput({
         {values.map(value => (
           <span className="pivi-settings-badge" key={value}>
             <span className="pivi-settings-badge__text">{value}</span>
-            <button
+            {onRemove && <button
               type="button"
               className="pivi-settings-badge__remove"
-              aria-label={removeLabel(value)}
+              aria-label={removeLabel?.(value)}
               disabled={disabled || committing}
               onClick={() => { void remove(value); }}
             >
               <PlatformIcon name="x" />
-            </button>
+            </button>}
           </span>
         ))}
         <input

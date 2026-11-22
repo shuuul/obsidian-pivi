@@ -4,6 +4,7 @@ import {
   type AgentMessage,
   type AgentTool,
 } from '@earendil-works/pi-agent-core';
+import { cleanupSessionResources } from '@earendil-works/pi-ai';
 import { PluginLogger } from '@pivi/agent/logging/pluginLogger';
 import type {
   McpOAuthService,
@@ -405,14 +406,10 @@ export class PiChatRuntime implements PiChatService {
     }
     this.subagentRunner.reset();
     this.subagentRunner.abortAllSubagents();
-    invalidateCompactionState(this.compactionState);
-    this.agent?.reset();
-    this.agent = null;
+    this.invalidateAgentSession();
     void this.mcpBridge?.dispose()?.catch((error: unknown) => {
       logger.warn('MCP bridge dispose failed', error);
     });
-    this.systemPromptKey = null;
-    this.setReady(false);
   }
 
   async loadSubagentToolCalls(agentId: string) {
@@ -524,8 +521,16 @@ export class PiChatRuntime implements PiChatService {
 
   private invalidateAgentSession(): void {
     invalidateCompactionState(this.compactionState);
-    this.agent?.reset();
+    const agent = this.agent;
     this.agent = null;
+    agent?.abort();
+    if (agent?.sessionId) {
+      try {
+        cleanupSessionResources(agent.sessionId);
+      } catch (error) {
+        logger.warn('Pi session resource cleanup failed', error);
+      }
+    }
     this.systemPromptKey = null;
     this.setReady(false);
   }

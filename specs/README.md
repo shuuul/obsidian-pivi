@@ -10,10 +10,6 @@ Copy [000-template.md](000-template.md) to start a spec.
 
 | Spec | Created | Outcome |
 |---|---|---|
-| [051 — Permission scopes and chat lifecycle cleanup](051-permission-scopes-and-chat-lifecycle-cleanup.md) | Active | Stable device-local permission scopes plus safe empty-session and Archive/Delete lifecycle cleanup. |
-| [053 — Composer mention badge clamp and copy-paste round trip](053-composer-mention-badge-clamp-and-copy-paste-round-trip.md) | Active | Composer mention badge clamp and copy-paste round trip |
-| [054 — Tool-result context overflow and in-turn pressure](054-tool-result-context-overflow-and-in-turn-pressure.md) | Active | Stop over-window continuations after giant tool results; require scoped `search` path plus payload caps. |
-| [055 — Pi AgentHarness migration spike](055-pi-agent-harness-migration-spike.md) | Active | Evidence-backed go/wait/no-go on moving sessions from the pi-coding-agent v3 SessionManager to the pi-agent-core AgentHarness over a vault FileSystem. |
 
 ## Archived specs
 
@@ -69,10 +65,15 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [048 — Settings UI system and Obsidian-native page navigation](archive/048-settings-ui-system-and-grouped-navigation.md) | 2026-09-03 | Delivered one enforced settings primitive/CSS system with Obsidian 1.13 native grouped navigation, indexed search routing, and all settings pages migrated. |
 | [049 — Post-review contracts architecture and community execution](archive/049-post-review-contracts-architecture-and-community-execution.md) | 2026-09-04 | Aligned active MCP docs, protected repository boundaries, reduced composition/API friction, added compatibility and quality signals, and launched community and funding routes. |
 | [050 — Architecture review stability and trustworthy task execution](archive/050-architecture-review-stability-and-trustworthy-task-execution.md) | 2026-09-05 | Hardened real-host verification, lifecycle rollback, measured projections, strict File Recovery, and package/documentation contracts with full local acceptance. |
+| [051 — Permission scopes and chat lifecycle cleanup](archive/051-permission-scopes-and-chat-lifecycle-cleanup.md) | 2026-11-22 | Stable device-local permission scopes plus safe empty-session and Archive/Delete lifecycle cleanup. |
 | [052 — Hide remaining agent tool routing](archive/052-hide-remaining-agent-tool-routing.md) | 2026-09-06 | Pi-family live names with silent aliases, unified read/ls routing, and search scoped to a note or folder. |
+| [053 — Composer mention badge clamp and copy-paste round trip](archive/053-composer-mention-badge-clamp-and-copy-paste-round-trip.md) | 2026-11-22 | Capped inline mention badges and preserved canonical tokens through clipboard round trips. |
+| [054 — Tool-result context overflow and in-turn pressure](archive/054-tool-result-context-overflow-and-in-turn-pressure.md) | 2026-11-22 | Continuation-barrier context pressure, scoped search, and bounded tool results. |
+| [055 — Pi AgentHarness migration spike](archive/055-pi-agent-harness-migration-spike.md) | 2026-11-22 | Retained Agent and SessionManager v3 after upstream retired the core harness. |
 | [056-pi-099-upgrade-and-pi-mcp-client.md](archive/056-pi-099-upgrade-and-pi-mcp-client.md) | 2026-10-04 | Pi 0.99.1 pins with ChatGPT sign-in, and the vault MCP client moved from the official SDK to standalone `@earendil-works/pi-mcp` without legacy SSE. |
 | [057-drop-portability-abstractions.md](archive/057-drop-portability-abstractions.md) | 2026-10-04 | Removed host- and runtime-portability seams: direct Obsidian presentation calls, wildcard leaf exports, two app host contracts, and no single-purpose agent ports. |
 | [058-simplification-follow-up.md](archive/058-simplification-follow-up.md) | 2026-10-04 | Removed test-only code, duplicated import-ban enforcement, and pre-0.15.0 startup migrations; reorganized and audited guidance. |
+| [059 — Repository maintenance and Pi 1.6 evaluation](archive/059-repository-maintenance-and-pi-16-evaluation.md) | 2026-11-22 | Restored dependency gates, upgraded to Pi 1.6, and verified Code Mode feasibility in Obsidian. |
 
 ## Numbering and files
 

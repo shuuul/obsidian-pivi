@@ -95,6 +95,22 @@ describe('createSettingsModelsPort provider removal', () => {
     expect(harness.settings.agentSettings.disabledProviders).toContain(providerId);
   });
 
+  it('offers Magpie once under local providers with its bundled logo', async () => {
+    const harness = createHarness();
+    expect(harness.port.listAddableLocalKinds()).toContainEqual({
+      kind: 'magpie', name: 'Magpie', logoSlug: 'magpie',
+    });
+    expect(harness.port.listCustomKinds()).not.toContainEqual(expect.objectContaining({ kind: 'magpie' }));
+
+    await expect(harness.port.addCustomKind('magpie')).resolves.toBe('magpie');
+    expect(harness.settings.agentSettings.customProviders).toContainEqual(expect.objectContaining({
+      id: 'magpie', baseUrl: 'http://127.0.0.1:3425/v1', apiKeyRequired: false,
+    }));
+    expect(harness.settings.agentSettings.disabledProviders).toContain('magpie');
+    expect(harness.port.getProviderLogoSlug('magpie')).toBe('magpie');
+    expect(harness.port.listAddableLocalKinds()).not.toContainEqual(expect.objectContaining({ kind: 'magpie' }));
+  });
+
   it('reports configuration readiness independently from disabled state', () => {
     const harness = createHarness();
     harness.settings.agentSettings.disabledProviders = ['deepseek'];

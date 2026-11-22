@@ -725,6 +725,18 @@
       "apply": "Apply changes"
     },
     "permissions": {
+      "editScope": "Edit scope",
+      "editScopeFor": "Edit scope for {label}",
+      "revokeAction": "Revoke",
+      "enabledFor": "Enable {label}",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "replaceScope": "Replace {label}",
+      "previewScope": "Preview scope",
+      "previewResult": "Scope to save: {scopes}",
+      "riskWarning": "Review carefully. This scope can run code or install packages.",
+      "clearAll": "Clear all persistent permissions",
+      "confirmClear": "Confirm clear",
       "heading": "Persistent permissions",
       "intro": "These device-local grants survive across chats. Turning a tool off keeps the records. Always decisions and directory access are listed here.",
       "revoke": "Revoke {label}",
