@@ -11,7 +11,7 @@ import type { FetchCompatible } from '@pivi/agent/ports';
 
 const GOOGLE_GENERATIVE_AI_API = 'google-generative-ai';
 
-function withoutScopedFetch<T extends StreamOptions>(
+function requireScopedFetch<T extends StreamOptions>(
   model: Model<Api>,
   options: T | undefined,
   configuredFetch: FetchCompatible | undefined,
@@ -26,16 +26,10 @@ function withoutScopedFetch<T extends StreamOptions>(
     throw new Error('Google streaming received an unexpected provider fetch.');
   }
 
-  // Pi 0.83's Google adapter rejects custom fetches, while @google/genai uses a
-  // free `fetch` identifier. The production bundle inject routes that identifier
-  // to the same configured Pivi client. Remove only the unsupported option after
-  // verifying its identity so the adapter cannot fall back to ambient networking.
-  const next = { ...options };
-  delete next.fetch;
-  return next;
+  return options;
 }
 
-/** Preserve the upstream provider catalog/auth while adapting its Google API transport. */
+/** Require the Pivi transport for Google API models, including mixed providers. */
 export function withScopedGoogleTransport<TApi extends Api>(
   provider: Provider<TApi>,
   getConfiguredFetch: () => FetchCompatible | undefined,
@@ -46,14 +40,14 @@ export function withScopedGoogleTransport<TApi extends Api>(
       return provider.stream(
         model,
         context,
-        withoutScopedFetch(model, options, getConfiguredFetch()),
+        requireScopedFetch(model, options, getConfiguredFetch()),
       );
     },
     streamSimple(model: Model<TApi>, context: TranscriptContext, options?: SimpleStreamOptions) {
       return provider.streamSimple(
         model,
         context,
-        withoutScopedFetch(model, options, getConfiguredFetch()),
+        requireScopedFetch(model, options, getConfiguredFetch()),
       );
     },
   };

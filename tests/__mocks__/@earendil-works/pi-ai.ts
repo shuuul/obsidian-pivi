@@ -492,6 +492,8 @@ export function builtinModels(): any {
 
 const EXTENDED_THINKING_LEVELS = ['off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'] as const;
 
+export const cleanupSessionResources = jest.fn();
+
 export function getSupportedThinkingLevels(model: {
   reasoning?: boolean;
   thinkingLevelMap?: Record<string, unknown>;

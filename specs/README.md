@@ -73,6 +73,7 @@ Copy [000-template.md](000-template.md) to start a spec.
 | [056-pi-099-upgrade-and-pi-mcp-client.md](archive/056-pi-099-upgrade-and-pi-mcp-client.md) | 2026-10-04 | Pi 0.99.1 pins with ChatGPT sign-in, and the vault MCP client moved from the official SDK to standalone `@earendil-works/pi-mcp` without legacy SSE. |
 | [057-drop-portability-abstractions.md](archive/057-drop-portability-abstractions.md) | 2026-10-04 | Removed host- and runtime-portability seams: direct Obsidian presentation calls, wildcard leaf exports, two app host contracts, and no single-purpose agent ports. |
 | [058-simplification-follow-up.md](archive/058-simplification-follow-up.md) | 2026-10-04 | Removed test-only code, duplicated import-ban enforcement, and pre-0.15.0 startup migrations; reorganized and audited guidance. |
+| [059 — Repository maintenance and Pi 1.6 evaluation](archive/059-repository-maintenance-and-pi-16-evaluation.md) | 2026-11-22 | Restored dependency gates, upgraded to Pi 1.6, and verified Code Mode feasibility in Obsidian. |
 
 ## Numbering and files
 

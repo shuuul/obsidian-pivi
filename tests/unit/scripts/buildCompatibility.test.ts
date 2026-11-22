@@ -218,13 +218,12 @@ describe('shared build compatibility', () => {
     expect(inputs.filter((input) => input.startsWith('node_modules/yaml/dist/'))).toEqual([]);
   });
 
-  it('routes the web build of the real Google SDK through the bundled scoped fetch', () => {
+  it('routes the web build of the real Google SDK through the explicit scoped fetch', () => {
     const tempDir = mkdtempSync(join(tmpdir(), 'pivi-google-fetch-'));
     const outfile = join(tempDir, 'google-fetch.cjs');
     try {
       const contents = `
             import { googleProvider } from '@earendil-works/pi-ai/providers/google';
-            import { installBundledFetch } from './packages/obsidian-host/src/bundledFetch';
             import { withScopedGoogleTransport } from './packages/engine-pi/src/models/scopedGoogleProvider';
 
             void (async () => {
@@ -242,7 +241,6 @@ describe('shared build compatibility', () => {
                 );
               };
 
-              installBundledFetch(scopedFetch);
               const provider = withScopedGoogleTransport(googleProvider(), () => scopedFetch);
               const model = provider.getModels()[0];
               if (!model) throw new Error('Google provider has no models');

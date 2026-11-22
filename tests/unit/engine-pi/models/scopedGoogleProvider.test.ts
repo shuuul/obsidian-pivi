@@ -19,7 +19,7 @@ function createProvider(): Provider {
 
 describe('withScopedGoogleTransport', () => {
   it.each(['stream', 'streamSimple'] as const)(
-    'verifies and removes the unsupported fetch option for Google %s',
+    'verifies and forwards the configured fetch for Google %s',
     (method) => {
       const scopedFetch = jest.fn();
       const provider = createProvider();
@@ -33,7 +33,7 @@ describe('withScopedGoogleTransport', () => {
       expect(provider[method]).toHaveBeenCalledWith(
         model,
         context,
-        { apiKey: 'token' },
+        options,
       );
     },
   );
