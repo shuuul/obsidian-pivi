@@ -1215,6 +1215,18 @@
       }
     },
     "permissions": {
+      "editScope": "Modifier la portée",
+      "editScopeFor": "Modifier la portée de {label}",
+      "revokeAction": "Révoquer",
+      "enabledFor": "Activer {label}",
+      "enabled": "Activé",
+      "disabled": "Désactivé",
+      "replaceScope": "Remplacer {label}",
+      "previewScope": "Prévisualiser la portée",
+      "previewResult": "Portée à enregistrer : {scopes}",
+      "riskWarning": "Vérifiez attentivement. Cette autorisation peut exécuter du code ou installer des paquets.",
+      "clearAll": "Effacer toutes les autorisations persistantes",
+      "confirmClear": "Confirmer l’effacement",
       "heading": "Autorisations persistantes",
       "intro": "Ces autorisations locales à l’appareil survivent d’une discussion à l’autre. Désactiver un outil conserve les enregistrements. Les décisions Toujours autoriser et l’accès aux répertoires figurent ici.",
       "revoke": "Révoquer {label}",

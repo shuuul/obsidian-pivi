@@ -177,7 +177,7 @@ const EXECUTOR_SUBCOMMANDS: Record<string, ReadonlySet<string>> = {
   pixi: new Set(['run', 'exec', 'shell']),
 };
 
-export function looksLikeLegacyBashEncoding(input: string): boolean {
+function looksLikeLegacyBashEncoding(input: string): boolean {
   const trimmed = input.trim();
   return trimmed.startsWith('exact:') || trimmed.startsWith('prefix:');
 }

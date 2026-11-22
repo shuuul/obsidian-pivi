@@ -103,6 +103,7 @@ function readSelectedOption(result: Record<string, string | string[]> | null): s
 
 async function askApprovalStep(
   deps: ComposerInlinePromptsDeps,
+  inputContainerEl: HTMLElement,
   parentEl: HTMLElement,
   setPending: (inline: InlineAskUserQuestion | null) => void,
   input: Record<string, unknown>,
@@ -124,7 +125,8 @@ async function askApprovalStep(
       );
       setPending(inline);
       inline.render();
-      inline.rootEl.scrollIntoView({ block: 'nearest' });
+      inline.rootEl.addClass('pivi-ask-capability-approval');
+      inputContainerEl.before(inline.rootEl);
     } catch (error) {
       setPending(null);
       reject(error instanceof Error ? error : new Error(String(error)));
@@ -136,8 +138,6 @@ export async function showCapabilityApprovalPrompt(
   deps: ComposerInlinePromptsDeps,
   request: CapabilityApprovalRequest,
   setPending: (inline: InlineAskUserQuestion | null) => void,
-  hideInputContainer: (el: HTMLElement) => void,
-  restoreInputContainer: (el: HTMLElement) => void,
 ): Promise<CapabilityApprovalResult> {
   const inputContainerEl = deps.getInputContainerEl();
   const parentEl = inputContainerEl.parentElement;
@@ -154,57 +154,45 @@ export async function showCapabilityApprovalPrompt(
   const headerEl = buildApprovalHeader(parentEl, request, selectedPermissions, (next) => {
     selectedPermissions = next;
   });
-  hideInputContainer(inputContainerEl);
+  const scopeResult = await askApprovalStep(
+    deps,
+    inputContainerEl,
+    parentEl,
+    setPending,
+    {
+      questions: [{
+        question: t('chat.capabilityApproval.scopeQuestion'),
+        options: [
+          { label: t('chat.capabilityApproval.deny'), description: '', value: 'deny' },
+          { label: t('chat.capabilityApproval.allowOnce'), description: '', value: 'once' },
+          {
+            label: t('chat.capabilityApproval.allowAlways'),
+            description: persistable
+              ? t('chat.capabilityApproval.allowAlwaysDescription')
+              : t('chat.capabilityApproval.alwaysUnavailable'),
+            value: 'always',
+          },
+        ],
+        isOther: false,
+        isSecret: false,
+      }],
+    },
+    {
+      title: t('chat.capabilityApproval.title'),
+      headerEl,
+      showCustomInput: false,
+      immediateSelect: true,
+      disabledOptionValues: persistable ? [] : ['always'],
+    },
+  );
 
-  try {
-    const alwaysOption = persistable
-      ? {
-          label: t('chat.capabilityApproval.allowAlways'),
-          description: t('chat.capabilityApproval.allowAlwaysDescription'),
-          value: 'always',
-        }
-      : {
-          label: t('chat.capabilityApproval.allowAlways'),
-          description: t('chat.capabilityApproval.alwaysUnavailable'),
-          value: 'always-disabled',
-        };
-    const scopeResult = await askApprovalStep(
-      deps,
-      parentEl,
-      setPending,
-      {
-        questions: [{
-          question: t('chat.capabilityApproval.scopeQuestion'),
-          options: [
-            { label: t('chat.capabilityApproval.deny'), description: '', value: 'deny' },
-            { label: t('chat.capabilityApproval.allowOnce'), description: '', value: 'once' },
-            alwaysOption,
-          ],
-          isOther: false,
-          isSecret: false,
-        }],
-      },
-      {
-        title: t('chat.capabilityApproval.title'),
-        headerEl,
-        showCustomInput: false,
-        immediateSelect: true,
-      },
-    );
-
-    const scopeOption = readSelectedOption(scopeResult);
-    if (!scopeOption || scopeOption === 'always-disabled') {
-      return { decision: scopeOption === 'always-disabled' ? 'cancel' : 'cancel' };
-    }
-    const decision = SCOPE_BY_OPTION[scopeOption];
-    if (!decision || decision === 'deny') {
-      return { decision: decision ?? 'cancel' };
-    }
-    if (decision === 'allow-always' && request.kind === 'bash') {
-      return { decision, bashPermissions: selectedPermissions };
-    }
-    return { decision };
-  } finally {
-    restoreInputContainer(inputContainerEl);
+  const scopeOption = readSelectedOption(scopeResult);
+  const decision = scopeOption ? SCOPE_BY_OPTION[scopeOption] : undefined;
+  if (!decision || decision === 'deny') {
+    return { decision: decision ?? 'cancel' };
   }
+  if (decision === 'allow-always' && request.kind === 'bash') {
+    return { decision, bashPermissions: selectedPermissions };
+  }
+  return { decision };
 }

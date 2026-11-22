@@ -50,3 +50,7 @@ body {
 body.theme-dark {
   --pivi-host-code-background: rgba(0, 0, 0, 0.2);
 }
+
+.mod-sidedock {
+  --pivi-host-chat-background: var(--background-secondary);
+}

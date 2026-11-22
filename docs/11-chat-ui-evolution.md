@@ -6,6 +6,8 @@ This document records the accepted direction after the first virtualized Chat UI
 
 The implemented Narrative, Activity, and Memory layers are the current baseline. Performance work must not gradually introduce one-off cards, status colors, nested scroll containers beyond the bounded disclosure scrollport, or competing context indicators.
 
+Capability approval appears above the composer and scrolls independently when space is tight. The transcript fade uses the host panel background at the input-position session switcher.
+
 ## Goals
 
 - Keep transcript cost bounded as durable sessions grow.

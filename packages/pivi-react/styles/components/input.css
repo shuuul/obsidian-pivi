@@ -6,6 +6,7 @@
   position: relative;
   z-index: var(--pivi-z-composer);
   padding: 0;
+  background: var(--pivi-chat-background);
 }
 
 .pivi-input-container.pivi-mention-dropdown-open,

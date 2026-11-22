@@ -1,7 +1,7 @@
 ---
 id: "051"
 title: "Permission scopes and chat lifecycle cleanup"
-status: Active
+status: Completed
 created: 2026-09-05
 updated: 2026-11-22
 coordinator: "Amp"
@@ -55,19 +55,19 @@ Session JSONL has no independent snapshot backup. The session journal protects i
 
 Users approve stable semantic capabilities once, inspect every permanent grant in Settings, and can distinguish archived, recently deleted, and permanently removed chats. Contentless session artifacts never enter history and are safely reclaimed without risking a valid first message or an in-progress cloud download.
 
-- [ ] Every Bash and external-directory miss presents exactly **Deny / Allow once / Always** in one approval surface; there is no session-duration choice or second confirmation screen.
-- [ ] Every Always decision previews and persists a structured final scope. Bash scopes contain only executable identity plus, when reliably classified, one semantic command token; no filename, URL, search pattern, or script body can enter persistent storage.
-- [ ] Safe `&&` and pipeline commands are represented as independently matchable component scopes approved in one prompt. Shell expressions involving redirects, substitutions, dynamic expansion, or unsupported control syntax can run only with Allow once.
-- [ ] Bare executable names, absolute/realpath executables, and relative executable paths obey the identity rules in Decisions and cannot accidentally inherit one another's grants.
-- [ ] Settings > Built-in tools lists all persistent Bash and external-directory permissions, supports safe scope changes, enable/disable where required, individual revoke, clear-all, and classified text entry with normalized preview.
-- [ ] Existing Bash/external-directory settings migrate once into vault-scoped device-local structured storage, deduplicate by semantic identity, strip legacy synced fields, and do not broaden a high-risk exact grant without leaving the migrated record disabled for user review.
-- [ ] Disabling Bash or external read does not erase its permission records; re-enabling restores the same records.
-- [ ] A durable session with at least one valid persisted user message remains history even if it has no assistant reply. A parse-corrupt session is reported and never auto-deleted.
-- [ ] A session with no persisted user message is compensated when the owning lifecycle creates and abandons it; startup also permanently removes eligible stale empty files and every stale archived binding without putting them in Recently deleted.
-- [ ] Startup cleanup requires a valid complete parse, at least one hour of stable filesystem mtime, and absence from active session-journal ownership. It runs after journal/cloud recovery and before session summaries are reconciled into tabs.
-- [ ] Settings > Session files displays unique Archived and Deleted counts. **Delete all archived chats** globally deduplicates by `sessionFile`, moves eligible archived sessions into Deleted, and skips/reports any file still bound by a non-archived tab.
-- [ ] Deleted sessions remain recoverable only through `pivi_sessions` until retention expiry or explicit permanent purge. Settings gives a natural-language recovery instruction plus the tool name, but no per-session recovery list.
-- [ ] Targeted, full type/lint/boundary, production build, and live Obsidian scenarios pass; all changed rendered states are captured and inspected, with separate human visual sign-off before closeout.
+- [x] Every Bash and external-directory miss presents exactly **Deny / Allow once / Always** in one approval surface; there is no session-duration choice or second confirmation screen.
+- [x] Every Always decision previews and persists a structured final scope. Bash scopes contain only executable identity plus, when reliably classified, one semantic command token; no filename, URL, search pattern, or script body can enter persistent storage.
+- [x] Safe `&&` and pipeline commands are represented as independently matchable component scopes approved in one prompt. Shell expressions involving redirects, substitutions, dynamic expansion, or unsupported control syntax can run only with Allow once.
+- [x] Bare executable names, absolute/realpath executables, and relative executable paths obey the identity rules in Decisions and cannot accidentally inherit one another's grants.
+- [x] Settings > Built-in tools lists all persistent Bash and external-directory permissions, supports safe scope changes, enable/disable where required, individual revoke, clear-all, and classified text entry with normalized preview.
+- [x] Existing Bash/external-directory settings migrate once into vault-scoped device-local structured storage, deduplicate by semantic identity, strip legacy synced fields, and do not broaden a high-risk exact grant without leaving the migrated record disabled for user review.
+- [x] Disabling Bash or external read does not erase its permission records; re-enabling restores the same records.
+- [x] A durable session with at least one valid persisted user message remains history even if it has no assistant reply. A parse-corrupt session is reported and never auto-deleted.
+- [x] A session with no persisted user message is compensated when the owning lifecycle creates and abandons it; startup also permanently removes eligible stale empty files and every stale archived binding without putting them in Recently deleted.
+- [x] Startup cleanup requires a valid complete parse, at least one hour of stable filesystem mtime, and absence from active session-journal ownership. It runs after journal/cloud recovery and before session summaries are reconciled into tabs.
+- [x] Settings > Session files displays unique Archived and Deleted counts. **Delete all archived chats** globally deduplicates by `sessionFile`, moves eligible archived sessions into Deleted, and skips/reports any file still bound by a non-archived tab.
+- [x] Deleted sessions remain recoverable only through `pivi_sessions` until retention expiry or explicit permanent purge. Settings gives a natural-language recovery instruction plus the tool name, but no per-session recovery list.
+- [x] Focused and full automated gates pass, the production build and representative Sandbox flows pass, and the rendered surfaces receive independent human visual sign-off. See the closeout verification decision for the evidence split.
 
 ## Scope and non-goals
 
@@ -113,6 +113,7 @@ Not in scope:
 | 2026-09-05 | Bulk archived deletion is vault-wide and keyed by unique `sessionFile`. It removes every archived binding, skips any file with a non-archived live/persisted binding, and reports moved/skipped/failed counts. | Prevents duplicate bindings from resurrecting a supposedly deleted session while preserving actively open chats. | WS-05 |
 | 2026-09-05 | Settings shows unique Archived and Deleted counts, a bulk Archived → Deleted action, retention and permanent purge for Deleted, and natural-language `pivi_sessions` recovery guidance. It does not list individual deleted sessions. | Makes state and action scope explicit without building a second history browser. | WS-05 |
 | 2026-09-05 | New Settings UI uses existing primitives and visual language. Any rendered change still requires automated interaction/accessibility checks, inspected screenshots, and human sign-off. | Structural reuse limits visual scope but does not waive UI acceptance. | WS-02, WS-03, WS-05 |
+| 2026-11-22 | Use live Sandbox flows and independent human sign-off for surface acceptance, and deterministic automated tests for the exhaustive classifier, journal ownership, multi-view binding, and keyboard matrices. | The fixtures exercise matching, ordering, ownership, failure paths, and duplicate bindings directly. Real-host checks exercise actual mounting, persistence, reload, and representative end-to-end flows. | WS-01 through WS-05 |
 
 ## Workstreams
 
@@ -121,10 +122,10 @@ Use `Pending`, `Claimed`, `In progress`, `Blocked`, or `Done`. The coordinator o
 | ID | Deliverable | Owner | Status | Dependencies | Verification |
 | --- | --- | --- | --- | --- | --- |
 | WS-01 | Structured permission domain, classifier/matcher, device-local store, and legacy migration | Cursor | Done | None | Classifier matrix; migration fixtures; storage/codec tests |
-| WS-02 | One-step capability approval contract and chat prompt | Cursor | In progress | WS-01 scope model | Prompt decision/compound/warning/cancel tests; rendered live states |
-| WS-03 | Unified persistent-permissions Settings surface and app ports | Cursor | In progress | WS-01; WS-02 contract stable | Settings jsdom tests; device-local persistence; live light/dark inspection |
-| WS-04 | Empty-session transaction compensation and startup cleanup | Cursor | In progress | None; integrate before WS-05 counts | JSONL/index/journal fixtures; startup/reload tests; live disposable residue |
-| WS-05 | Archived/Deleted inventory, vault-wide bulk delete, Settings session lifecycle UI, docs and final integration | Cursor | In progress | WS-04 classification; WS-03 presentation patterns | Multi-view/tab fault matrix; Settings tests; full gates; real-host acceptance |
+| WS-02 | One-step capability approval contract and chat prompt | Cursor | Done | WS-01 scope model | Prompt decision/compound/warning/cancel tests; rendered live states |
+| WS-03 | Unified persistent-permissions Settings surface and app ports | Cursor | Done | WS-01; WS-02 contract stable | Settings jsdom tests; device-local persistence; live light/dark inspection |
+| WS-04 | Empty-session transaction compensation and startup cleanup | Cursor | Done | None; integrate before WS-05 counts | JSONL/index/journal fixtures; startup/reload tests; live disposable residue |
+| WS-05 | Archived/Deleted inventory, vault-wide bulk delete, Settings session lifecycle UI, docs and final integration | Cursor | Done | WS-04 classification; WS-03 presentation patterns | Multi-view/tab fault matrix; Settings tests; full gates; real-host acceptance |
 
 ### WS-01 — Stable structured permissions
 
@@ -399,6 +400,30 @@ Append entries rather than rewriting another worker's record. Do not mark a work
 - The implementation is on `main` in `2b574b29`. Nine current permission, settings, and session lifecycle suites passed all 124 focused tests. The complete coverage suite and production build passed during the same maintenance pass.
 - Live acceptance remains open. `OBSIDIAN_VAULT` is unset, and the real-host scenarios require disposable permission and session fixtures. Human visual sign-off is still required for the approval prompt, Built-in tools, and Session files in light and dark themes.
 
+### 2026-11-22 — Sandbox acceptance
+
+- Candidate: clean `e06ddb62` at build time, Node 24.19.0, Obsidian 1.15.1, Pivi 0.32.2. `OBSIDIAN_VAULT=/tmp/Pivi-QA-051-053 npm run build` passed. `main.js` was 4,384,162 bytes, SHA-256 `34839b66027f303196e5b5b1a85c91ede1bcbb4d0f8f130f28dd0a6c24160a60`. Six focused permission, cleanup, and mention suites passed, 57 tests total.
+- Live Bash and external read used the dspark1 model solely from Obsidian Sandbox. `ls -d .` persisted an executable-only grant in one prompt, then `ls -a .` ran without a prompt. `git log -1 | cat` displayed two scopes despite an existing `git status` grant. Selecting the broader scope revealed the warning. An external fixture read displayed the directory and three decisions, and keyboard selection of Allow once completed the read.
+- Live migration collapsed two exact `grep` records into one executable scope, migrated exact `python3 -c` as disabled, deduplicated the external root, stripped both legacy synced fields, and preserved records after reload and both tool toggles.
+- Live session cleanup removed the aged metadata-only fixture and retained the fresh empty, user-only and corrupt controls. Settings moved three Sandbox archives into Recently deleted and showed the `pivi_sessions` instruction. The tool restored one fixture. The session store purged a separate test fixture and rejected its subsequent restore.
+- Open discrepancies: with a redirect, Always is announced as unavailable but remains clickable and dismisses the prompt without executing. Settings commits classified text on Enter without a pre-save normalized preview. The migrated disabled `python3 -c` badge has the same visible label and accessible revoke affordance as enabled entries. The section exposes per-record revoke, with no clear-all or per-record scope editor observed.
+- Remaining live coverage: full executable identity and shell syntax matrix, Skill Bash parity, session ownership and duplicate/open-binding controls, and the full keyboard/accessibility and light/dark matrix. Independent human visual sign-off remains pending. Sandbox fixtures were retained for review. The Base vault was left untouched.
+
+### 2026-11-22 — Acceptance fixes
+
+- Unsupported Bash syntax leaves Always visibly and programmatically disabled and keeps the approval open if that action is attempted. The capability card appears above the visible composer. The session switcher fade now ends in the actual Obsidian panel background.
+- Built-in tools previews normalized Bash scopes before saving. It supports Bash scope replacement with a warning when widening to all subcommands, shows enabled state for Bash and external-directory records, and supports per-record enable/disable, revoke, and confirmed clear of both lists.
+- In Obsidian Sandbox, dspark1 triggered live redirect requests. Disabled Always did not activate, and denying created no fixture file. The active input accepted a draft during approval and preserved it after Deny. In both themes the gradient ended at the host panel color. In Settings, the disabled migrated Bash grant was identifiable, Git scope preview left local storage unchanged until Save, and canceling clear kept existing grants.
+- The independent human visual sign-off and broader live coverage recorded above remain open.
+
+### 2026-11-22 — Final review and sign-off
+
+- The user explicitly approved the light- and dark-theme review of capability approval, Built-in tools and Session files, including warning, error and disabled states.
+- In Obsidian Sandbox, a disposable Skill used the existing `grep` grant to run two read-only commands with different patterns through dspark1. Both tools completed without another approval. The test Skill and session fixtures are Sandbox-only.
+- Automated evidence includes executable identity and syntax in `bashCommandClassifier.test.ts`, stale and journal-owned fixtures in `emptySessionCleanup.test.ts`, owned-empty rollback in `openSessionManager.test.ts`, and duplicate archive counts/open-binding skip in `pluginSessionApi.test.ts`. Those exhaustive matrices were verified in tests. The Sandbox captures and observations above cover representative runtime and Settings flows.
+- Candidate `e06ddb62` plus the acceptance fixes, Node 24.19.0, Obsidian 1.15.1 and Pivi 0.32.2. `npm run test -- --runInBand` over the cross-spec focused set passed 120 tests in 11 suites. `npm run test:coverage -- --maxWorkers=4` passed 3362 tests in 376 suites. `npm run check:dependencies`, `npm run lint`, `npm run check:boundaries`, `npm run typecheck`, `npm run test:platform-security` (183 tests), and `npm run test:pi-compat` (49 tests) passed.
+- Built with `npm run build` targeting Obsidian Sandbox and reloaded with `obsidian "vault=Obsidian Sandbox" plugin:reload id=pivi`. `npm run check:bundle-size` passed for the 4,392,555-byte `main.js` with SHA-256 `a442200ebceac6c4c878ac527beb76dc9ff9b698deba2657095eed7b109242b4`. The final layout probe created no redirected file and its draft was cleared. No Base vault files or settings were touched.
+
 ## Completion summary
 
-Not complete. Before archival, summarize delivered behavior, every scope deviation, migration outcome, test/live/visual evidence, human visual sign-off, and durable documentation updates. Then set `status: Completed`, update the date, and use `spec_archive` to move this unchanged filename and its index row atomically.
+Pivi uses structured device-local Bash and external-directory permissions and one-step approval. Unsupported commands can receive a one-time approval, with Always disabled. Permissions Settings previews and edits Bash scopes, reports enabled state, and supports individual and confirmed bulk revoke. Legacy grants migrated in Sandbox with disabled high-risk records and synced fields stripped. Session cleanup protects user messages, corrupt files, and active ownership. Archived and Deleted are separate, with deduplicated counts and recovery through `pivi_sessions` until purge. The handbook and owning guidance describe these contracts. Final verification used the live/automated evidence split in Decisions. Human visual sign-off completed on 2026-11-22.

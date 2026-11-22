@@ -1215,6 +1215,18 @@
       }
     },
     "permissions": {
+      "editScope": "Editar escopo",
+      "editScopeFor": "Editar escopo de {label}",
+      "revokeAction": "Revogar",
+      "enabledFor": "Ativar {label}",
+      "enabled": "Ativado",
+      "disabled": "Desativado",
+      "replaceScope": "Substituir {label}",
+      "previewScope": "Pré-visualizar escopo",
+      "previewResult": "Escopo a salvar: {scopes}",
+      "riskWarning": "Revise com cuidado. Esta permissão pode executar código ou instalar pacotes.",
+      "clearAll": "Limpar todas as permissões persistentes",
+      "confirmClear": "Confirmar limpeza",
       "heading": "Permissões persistentes",
       "intro": "Estas concessões locais do dispositivo sobrevivem entre chats. Desligar uma ferramenta mantém os registos. Decisões de Permitir sempre e o acesso a diretórios aparecem aqui.",
       "revoke": "Revogar {label}",

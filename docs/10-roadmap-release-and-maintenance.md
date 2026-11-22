@@ -10,11 +10,12 @@ Keep roadmap entries at the priority/outcome level. When an item becomes long-ru
 
 ### Now
 
-- Complete live acceptance for [spec 051](../specs/051-permission-scopes-and-chat-lifecycle-cleanup.md). Structured permissions and archived/deleted session cleanup are implemented. The remaining work is disposable-vault verification and human visual sign-off for the approval and Settings surfaces.
 - Complete the two environment-dependent live release-candidate rows: Hover Editor in a vault where that community plugin is installed, and MCP OAuth against a configured test server.
 - Keep typecheck, zero-warning lint, boundaries, coverage, production build, and bundle-size gates green.
 
 ### Recently completed
+
+- **Permission scopes and chat lifecycle cleanup** (spec [051](../specs/archive/051-permission-scopes-and-chat-lifecycle-cleanup.md)). Completed persistent permission and Archive/Delete acceptance in Sandbox.
 
 - **Session runtime migration decision** (spec [055](../specs/archive/055-pi-agent-harness-migration-spike.md)). Keep the current Agent and v3 SessionManager. Pi 1.6 retired the core harness targeted by the spike. The separate experimental `pi-durable` package would need its own evaluation if Pivi takes on cross-restart task recovery.
 

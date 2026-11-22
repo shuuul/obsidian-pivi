@@ -209,6 +209,20 @@ function renderQuestionTab(host: InlineAskUserQuestionHost, idx: number): void {
     const isSelected = selected.has(optionValue);
 
     const row = listEl.createDiv({ cls: 'pivi-ask-item' });
+    const isDisabled = host.config.disabledOptionValues.includes(optionValue);
+    if (host.config.immediateSelect) {
+      row.setAttribute('role', 'button');
+      if (isDisabled) {
+        row.setAttribute('aria-disabled', 'true');
+        row.addClass('is-disabled');
+      } else {
+        row.tabIndex = 0;
+        row.addEventListener('focus', () => {
+          host.focusedItemIndex = optIdx;
+          updateFocusIndicator(host);
+        });
+      }
+    }
     if (isFocused) row.addClass('is-focused');
     if (isSelected) row.addClass('is-selected');
 
@@ -231,11 +245,13 @@ function renderQuestionTab(host: InlineAskUserQuestionHost, idx: number): void {
       labelBlock.createDiv({ text: option.description, cls: 'pivi-ask-item-desc' });
     }
 
-    row.addEventListener('click', () => {
-      host.focusedItemIndex = optIdx;
-      updateFocusIndicator(host);
-      host.selectOption(idx, option);
-    });
+    if (!isDisabled) {
+      row.addEventListener('click', () => {
+        host.focusedItemIndex = optIdx;
+        updateFocusIndicator(host);
+        host.selectOption(idx, option);
+      });
+    }
 
     host.currentItems.push(row);
   }

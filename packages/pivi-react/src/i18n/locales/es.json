@@ -1215,6 +1215,18 @@
       }
     },
     "permissions": {
+      "editScope": "Editar alcance",
+      "editScopeFor": "Editar el alcance de {label}",
+      "revokeAction": "Revocar",
+      "enabledFor": "Activar {label}",
+      "enabled": "Activado",
+      "disabled": "Desactivado",
+      "replaceScope": "Reemplazar {label}",
+      "previewScope": "Previsualizar alcance",
+      "previewResult": "Alcance que se guardará: {scopes}",
+      "riskWarning": "Revisa con atención. Este permiso puede ejecutar código o instalar paquetes.",
+      "clearAll": "Borrar todos los permisos persistentes",
+      "confirmClear": "Confirmar borrado",
       "heading": "Permisos persistentes",
       "intro": "Estas concesiones locales del dispositivo sobreviven entre chats. Desactivar una herramienta conserva los registros. Las decisiones de Permitir siempre y el acceso a directorios aparecen aquí.",
       "revoke": "Revocar {label}",

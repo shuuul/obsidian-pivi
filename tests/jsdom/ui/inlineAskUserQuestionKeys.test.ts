@@ -13,6 +13,7 @@ function createHost(overrides: Partial<InlineAskUserQuestionHost> = {}): InlineA
       title: 'Question',
       showCustomInput: true,
       immediateSelect: false,
+      disabledOptionValues: [],
     },
     questions: [{
       question: 'Pick one',

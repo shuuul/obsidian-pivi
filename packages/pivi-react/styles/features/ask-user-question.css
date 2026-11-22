@@ -6,6 +6,15 @@
   outline: none;
 }
 
+.pivi-ask-capability-approval {
+  flex: 0 1 auto;
+  max-block-size: min(24rem, 40%);
+  min-block-size: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  background: var(--pivi-chat-background);
+}
+
 .pivi-ask-inline-title {
   font-weight: 700;
   color: var(--pivi-host-text-muted);
@@ -95,7 +104,8 @@
   border-radius: var(--pivi-radius-xs);
 }
 
-.pivi-ask-item:hover {
+.pivi-ask-item:not(.is-disabled):hover,
+.pivi-ask-item[role="button"]:focus-visible {
   background: var(--pivi-host-background-hover);
 }
 
@@ -138,6 +148,10 @@
 /* Selected items: green text */
 .pivi-ask-item.is-selected .pivi-ask-item-label {
   color: var(--pivi-host-color-green);
+}
+
+.pivi-ask-item[aria-disabled="true"] {
+  cursor: default;
 }
 
 /* Disabled items: muted text */

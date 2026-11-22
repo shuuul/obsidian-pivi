@@ -1215,6 +1215,18 @@
       }
     },
     "permissions": {
+      "editScope": "编辑范围",
+      "editScopeFor": "编辑 {label} 的授权范围",
+      "revokeAction": "撤销",
+      "enabledFor": "启用 {label}",
+      "enabled": "已启用",
+      "disabled": "已停用",
+      "replaceScope": "替换 {label}",
+      "previewScope": "预览范围",
+      "previewResult": "将保存的范围：{scopes}",
+      "riskWarning": "请仔细检查。此范围可以运行代码或安装软件包。",
+      "clearAll": "清除所有持久权限",
+      "confirmClear": "确认清除",
       "heading": "持久权限",
       "intro": "这些设备本地授权会跨聊天保留。关闭工具不会删除记录。始终允许的决定和目录访问都列在这里。",
       "revoke": "撤销 {label}",
