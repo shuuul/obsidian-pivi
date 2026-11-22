@@ -3,7 +3,7 @@ id: "051"
 title: "Permission scopes and chat lifecycle cleanup"
 status: Active
 created: 2026-09-05
-updated: 2026-09-05
+updated: 2026-11-22
 coordinator: "Amp"
 ---
 
@@ -393,6 +393,11 @@ Append entries rather than rewriting another worker's record. Do not mark a work
 - Remaining: live Obsidian scenarios with disposable fixtures; capture/inspect the approval prompt and both Settings pages in light/dark including warning/error/disabled; **human visual sign-off**. Do not archive until that sign-off lands.
 - Blockers: none in product code. Closeout is blocked on a human who viewed the rendered surfaces.
 - Next action: run the spec's real-host permission and session scenarios, then record visual sign-off and archive.
+
+### 2026-11-22 — Closeout review
+
+- The implementation is on `main` in `2b574b29`. Nine current permission, settings, and session lifecycle suites passed all 124 focused tests. The complete coverage suite and production build passed during the same maintenance pass.
+- Live acceptance remains open. `OBSIDIAN_VAULT` is unset, and the real-host scenarios require disposable permission and session fixtures. Human visual sign-off is still required for the approval prompt, Built-in tools, and Session files in light and dark themes.
 
 ## Completion summary
 

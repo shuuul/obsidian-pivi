@@ -10,7 +10,7 @@ Keep roadmap entries at the priority/outcome level. When an item becomes long-ru
 
 ### Now
 
-- Implement [spec 051](../specs/051-permission-scopes-and-chat-lifecycle-cleanup.md): replace filename-bound Bash approvals with explicit device-local executable/semantic-command scopes, expose persistent permissions in Settings, prevent metadata-only chats from entering history, and make Archived versus Deleted cleanup observable.
+- Complete live acceptance for [spec 051](../specs/051-permission-scopes-and-chat-lifecycle-cleanup.md). Structured permissions and archived/deleted session cleanup are implemented. The remaining work is disposable-vault verification and human visual sign-off for the approval and Settings surfaces.
 - Complete the two environment-dependent live release-candidate rows: Hover Editor in a vault where that community plugin is installed, and MCP OAuth against a configured test server.
 - Keep typecheck, zero-warning lint, boundaries, coverage, production build, and bundle-size gates green.
 
