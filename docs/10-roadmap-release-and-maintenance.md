@@ -16,6 +16,8 @@ Keep roadmap entries at the priority/outcome level. When an item becomes long-ru
 
 ### Recently completed
 
+- **Session runtime migration decision** (spec [055](../specs/archive/055-pi-agent-harness-migration-spike.md)). Keep the current Agent and v3 SessionManager. Pi 1.6 retired the core harness targeted by the spike. The separate experimental `pi-durable` package would need its own evaluation if Pivi takes on cross-restart task recovery.
+
 - **Architecture stability and trustworthy task execution** (spec [050](../specs/archive/050-architecture-review-stability-and-trustworthy-task-execution.md)): repaired deterministic real-host smoke, made fork/shutdown cleanup transactional, measured projection ownership without retaining an unjustified optimization, required File Recovery before supported Trusted-automation mutations, and enforced package dependency/export plus active Markdown-link contracts.
 - **Post-review contracts and community execution** (spec [049](../specs/archive/049-post-review-contracts-architecture-and-community-execution.md)): aligned active MCP docs, protected repository boundaries, narrowed composition/API surfaces, added compatibility and quality signals, and established contribution and funding routes. Archived on 2026-09-04; further stability work belongs to spec 050.
 - **Composable workflow prompts** (spec `046`): typed prompt-module registry (core locked, workflow composable including default-off long-line normalization, custom modules after workflow), Settings Prompt tab with compact estimated-token usage, main-Agent `pivi_prompt`, synced `.pivi/settings.json` composition, and `estimateTextTokens` owned by `@pivi/agent/prompt` (engine compaction re-exports it).
