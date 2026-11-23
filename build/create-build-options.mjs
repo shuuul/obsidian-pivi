@@ -1,7 +1,7 @@
-import { buildSync } from 'esbuild';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { gzipSync } from 'zlib';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { gzipSync } from 'node:zlib';
+import { rolldown } from 'rolldown';
 import { external } from './externals.mjs';
 import { assertCommunityAudit } from './plugins/assert-community-audit.mjs';
 import { stripReactHoistableScripts } from './plugins/strip-react-hoistable-scripts.mjs';
@@ -13,90 +13,80 @@ import { shimPiAiCompat, shimPiAiEnvApiKeys } from './plugins/shim-pi-ai.mjs';
 import { shimSignalExit } from './plugins/shim-signal-exit.mjs';
 import { shimDebug } from './plugins/shim-debug.mjs';
 import { preferBrowserBuilds } from './plugins/prefer-browser-builds.mjs';
-import {
-  releaseArtifactBanner,
-  releaseArtifactVersion,
-} from './release-artifact-version.mjs';
+import { rewriteDynamicNodeImports } from './postprocess/rewrite-node-imports.mjs';
+import { releaseArtifactBanner, releaseArtifactVersion } from './release-artifact-version.mjs';
 
-const rootDir = path.dirname(fileURLToPath(import.meta.url));
-const projectRoot = path.resolve(rootDir, '..');
+const projectRoot = fileURLToPath(new URL('..', import.meta.url));
 
-function buildEmbeddedSkillsCli() {
-  const result = buildSync({
-    entryPoints: [path.join(projectRoot, 'node_modules/skills/bin/cli.mjs')],
-    bundle: true,
+async function buildEmbeddedSkillsCli() {
+  const bundle = await rolldown({
+    cwd: projectRoot,
+    input: 'node_modules/skills/bin/cli.mjs',
     platform: 'node',
-    format: 'esm',
-    target: 'node22',
-    banner: {
-      js: "import { createRequire as __piviCreateRequire } from 'node:module'; const require = __piviCreateRequire(import.meta.url);",
-    },
-    minify: true,
-    write: false,
+    transform: { target: 'node22' },
   });
-  const source = result.outputFiles?.[0]?.contents;
-  if (!source) {
-    throw new Error('Failed to bundle the pinned skills CLI dependency.');
+  try {
+    const { output } = await bundle.generate({ format: 'esm', codeSplitting: false, minify: true });
+    if (output.length !== 1 || output[0].type !== 'chunk') {
+      throw new Error('Expected a single embedded Skills CLI bundle.');
+    }
+    const compressed = gzipSync(output[0].code, { level: 9 });
+    // Keep the gzip header platform-independent for equivalent builds.
+    compressed[9] = 255;
+    return compressed;
+  } finally {
+    await bundle.close();
   }
-  const compressed = gzipSync(source, { level: 9 });
-  // zlib writes the host OS into byte 9 even when the compressed payload is
-  // identical. Use gzip's "unknown" value so macOS and Linux builds match.
-  compressed[9] = 255;
-  return compressed.toString('base64');
 }
 
-const embeddedSkillsCliGzipBase64 = buildEmbeddedSkillsCli();
-export const embeddedSkillsCliGzipBytes = Buffer.byteLength(
-  embeddedSkillsCliGzipBase64,
-  'base64',
-);
-
-/**
- * Returns the common production/development build configuration without deployment side effects.
- * Callers may append output lifecycle plugins such as the Obsidian deployer.
- */
-export function createBuildOptions({ production, metafile = false, write = true }) {
+export async function createBuildOptions({ production }) {
+  const skillsCli = await buildEmbeddedSkillsCli();
   return {
-    entryPoints: [path.join(projectRoot, 'src/main.ts')],
-    bundle: true,
-    // Replace free `fetch` identifiers in upstream SDKs with the scoped Pivi client
-    // without assigning `window.fetch`.
-    inject: [path.join(projectRoot, 'packages/obsidian-host/src/bundledFetch.ts')],
-    plugins: [
-      shimPiCodingAgentSessionEntrypoint,
-      shimPiCodingAgentConfig,
-      shimPiAiCompat,
-      shimPiAiEnvApiKeys,
-      shimSignalExit,
-      shimDebug,
-      preferBrowserBuilds,
-      stripReactHoistableScripts,
-      ...(production ? [assertCommunityAudit] : []),
-    ],
-    platform: 'node',
-    external,
-    format: 'cjs',
-    banner: {
-      js: releaseArtifactBanner,
+    skillsCliGzipBytes: skillsCli.byteLength,
+    input: {
+      cwd: projectRoot,
+      input: 'src/main.ts',
+      plugins: [
+        shimPiCodingAgentSessionEntrypoint,
+        shimPiCodingAgentConfig,
+        shimPiAiCompat,
+        shimPiAiEnvApiKeys,
+        shimSignalExit,
+        shimDebug,
+        preferBrowserBuilds,
+        stripReactHoistableScripts,
+        ...(production ? [assertCommunityAudit] : []),
+        {
+          name: 'rewrite-node-imports',
+          renderChunk(code, chunk) {
+            return rewriteDynamicNodeImports(code, chunk.fileName);
+          },
+        },
+      ],
+      platform: 'node',
+      external,
+      moduleTypes: { '.svg': 'text' },
+      transform: {
+        target: 'es2022',
+        // Route free fetch calls through the scoped client without changing window.fetch.
+        inject: {
+          fetch: [path.join(projectRoot, 'packages/obsidian-host/src/bundledFetch.ts'), 'fetch'],
+        },
+        define: {
+          'process.env.NODE_ENV': JSON.stringify(production ? 'production' : 'development'),
+          __PIVI_RELEASE_VERSION__: JSON.stringify(releaseArtifactVersion),
+          __PIVI_EMBEDDED_SKILLS_CLI_GZIP_BASE64__: JSON.stringify(skillsCli.toString('base64')),
+        },
+        jsx: { runtime: 'automatic', importSource: 'react' },
+      },
     },
-    charset: 'utf8',
-    target: 'es2022',
-    define: {
-      'process.env.NODE_ENV': JSON.stringify(production ? 'production' : 'development'),
-      __PIVI_RELEASE_VERSION__: JSON.stringify(releaseArtifactVersion),
-      __PIVI_EMBEDDED_SKILLS_CLI_GZIP_BASE64__: JSON.stringify(embeddedSkillsCliGzipBase64),
+    output: {
+      file: path.join(projectRoot, 'main.js'),
+      format: 'cjs',
+      codeSplitting: false,
+      banner: releaseArtifactBanner,
+      sourcemap: production ? false : 'inline',
+      minify: production,
     },
-    jsx: 'automatic',
-    jsxImportSource: 'react',
-    loader: {
-      '.svg': 'text',
-    },
-    logLevel: 'info',
-    sourcemap: production ? false : 'inline',
-    minify: production,
-    treeShaking: true,
-    outfile: path.join(projectRoot, 'main.js'),
-    metafile,
-    write,
   };
 }

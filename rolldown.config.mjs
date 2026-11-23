@@ -1,4 +1,4 @@
-import esbuild from 'esbuild';
+import { rolldown, watch } from 'rolldown';
 import { existsSync, readFileSync } from 'fs';
 import process from 'process';
 import { createBuildOptions } from './build/create-build-options.mjs';
@@ -16,16 +16,23 @@ if (existsSync('.env.local')) {
 }
 
 const production = process.argv[2] === 'production';
-const buildOptions = createBuildOptions({ production });
-buildOptions.plugins.push(createCopyToObsidianPlugin());
-
-const context = await esbuild.context(buildOptions);
+const { input, output } = await createBuildOptions({ production });
+input.plugins.push(createCopyToObsidianPlugin());
 
 if (production) {
-  await context.rebuild();
-  await context.dispose();
-  // Let the process exit naturally after all esbuild lifecycle hooks settle.
-  // An explicit process.exit can terminate deferred onEnd deployment/postprocess work.
+  const bundle = await rolldown(input);
+  try {
+    await bundle.write(output);
+  } finally {
+    await bundle.close();
+  }
 } else {
-  await context.watch();
+  const watcher = watch({ ...input, output });
+  watcher.on('event', async (event) => {
+    if (event.code === 'ERROR') console.error(event.error);
+    if (event.code === 'BUNDLE_END') {
+      await event.result?.close();
+      console.log(`Built main.js in ${event.duration} ms`);
+    }
+  });
 }

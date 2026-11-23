@@ -50,7 +50,7 @@ Use watch mode while iterating:
 npm run dev
 ```
 
-It builds CSS once and starts esbuild in watch mode. Run `npm run build:css` again after changing CSS, or use the production path for a reliable Obsidian inspection:
+It builds CSS once and starts Rolldown in watch mode. Run `npm run build:css` again after changing CSS, or use the production path for a reliable Obsidian inspection:
 
 ```bash
 npm run build

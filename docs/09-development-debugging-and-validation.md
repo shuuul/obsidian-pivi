@@ -9,10 +9,12 @@ Validation should match the risk of the change. Start with the smallest focused 
 | Task | Command |
 |---|---|
 | Install exact dependencies | `npm ci` |
-| Watch bundle and CSS | `npm run dev` |
+| Watch JavaScript bundle after building CSS once | `npm run dev` |
 | Build CSS | `npm run build:css` |
 | Typecheck source and tests | `npm run typecheck` |
 | Lint with zero warnings | `npm run lint` |
+| Format selected files | `npm run format -- path/to/file.ts` |
+| Check formatting on selected files | `npm run format:check -- path/to/file.ts` |
 | Documentation capability and local-link contracts | `npm run check:docs-contracts` |
 | Architecture/docs/package/i18n/dead-code/spec/Pi-pin guards | `npm run check:boundaries` |
 | Unused files and unused exports (knip, `knip.json`) | `npm run check:dead-code` |
@@ -27,6 +29,10 @@ Validation should match the risk of the change. Start with the smallest focused 
 | Bundle inspection metadata | `npm run analyze:bundle` |
 | Bundle-size ceiling | `npm run check:bundle-size` |
 | Privacy-safe session diagnostics | `npm run audit:sessions -- <vault-or-sessions-dir>` |
+
+`npm run lint` runs type-aware Oxlint, then ESLint for Obsidian-specific checks, import sorting, React Hooks, and rules with different behavior. Oxlint checks deprecated TypeScript APIs. ESLint loads the source and test TypeScript projects explicitly for its remaining type-aware rules. The shared PR and release action runs the same two commands as separate steps so their timings appear in Actions. Use `npm run lint:fix` to run both autofix passes. Oxfmt is available for selected files and leaves import ordering to ESLint.
+
+`npm run analyze:bundle` measures final `main.js` bytes and reports pre-minification module sizes. When comparing an esbuild revision with a Rolldown revision, the PR report compares total bundle sizes and omits per-module deltas.
 
 Always run Jest through the npm wrapper:
 
@@ -120,7 +126,7 @@ npm run build && \
 npm run check:bundle-size
 ```
 
-CI runs the full quality gates on Ubuntu and focused `test:platform-security` jobs on macOS and Windows. Pull requests also build production metafiles from their exact base and head, then append a non-blocking bundle report to the job summary. Release publication is a maintainer-pushed annotated tag (`x.y.z`, no leading `v`) after a `chore(release): prepare x.y.z` commit that already contains the matching `CHANGELOG.md` section and synced Obsidian metadata; the tag workflow then runs the same shared quality-gate action (dependency audit, typecheck, lint, boundaries, coverage, build, bundle-size) before uploading assets. See [Roadmap, release, and maintenance](10-roadmap-release-and-maintenance.md). Third-party Actions in privileged workflows are pinned to full commit SHAs; Dependabot covers `github-actions` updates. Do not explain away an unexpected failure or weaken a test to make a behavior change pass.
+CI runs the static checks and production build in parallel with Jest coverage on Ubuntu. The required `quality-gates` check succeeds when both jobs succeed. The focused `test:platform-security` jobs on macOS and Windows are independently required. New pushes cancel superseded runs for the same pull request. Pull requests also build production metafiles from their exact base and head and append a non-blocking bundle report to the job summary. Release publication is a maintainer-pushed annotated tag (`x.y.z`, no leading `v`) after a `chore(release): prepare x.y.z` commit that already contains the matching `CHANGELOG.md` section and synced Obsidian metadata; the tag workflow then runs the same shared quality-gate action (dependency audit, typecheck, lint, boundaries, coverage, build, bundle-size) before uploading assets. See [Roadmap, release, and maintenance](10-roadmap-release-and-maintenance.md). Third-party Actions in privileged workflows are pinned to full commit SHAs; Dependabot covers `github-actions` updates. Do not explain away an unexpected failure or weaken a test to make a behavior change pass.
 
 Before bumping `@earendil-works/pi-*`, keep the four packages (`pi-agent-core`, `pi-ai`, `pi-coding-agent`, `pi-mcp`) on one exact version, update every `upstreamVersion` in `packages/engine-pi/compatibility-manifest.json`, run `npm run test:pi-compat`, and keep both Pi checks green. The manifest records why each upstream-shape-dependent adaptation exists, its tests, its removal condition, and issue [#113](https://github.com/shuuul/obsidian-pivi/issues/113). A weekly informational canary tests the newest synchronized stable Pi release in an ephemeral runner and updates one marker-backed comment on that issue; it never changes the repository or replaces review of an actual dependency bump. Private SessionManager access is asserted through one adapter and must fail with an actionable error before session mutation when a capability is missing.
 

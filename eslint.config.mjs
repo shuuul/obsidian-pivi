@@ -6,6 +6,7 @@ import simpleImportSort from "eslint-plugin-simple-import-sort";
 import { defineConfig } from "eslint/config";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import oxlint from "./.oxlintrc.json" with { type: "json" };
 
 const jestRecommended = jestPlugin.configs["flat/recommended"];
 const tsconfigRootDir = dirname(fileURLToPath(import.meta.url));
@@ -50,6 +51,15 @@ const piviObsidianRuleOverrides = {
   "obsidianmd/settings-tab/prefer-setting-definitions": "error",
 };
 
+// Turn off only the rules this repository explicitly runs in Oxlint. The
+// Obsidian plugin and any rules with different behavior still run in ESLint.
+function migratedRules(rules) {
+  const entries = Object.entries(rules)
+    .filter(([, setting]) => (Array.isArray(setting) ? setting[0] : setting) !== "off")
+    .map(([rule]) => [rule.replace(/^typescript\//, "@typescript-eslint/"), "off"]);
+  return Object.fromEntries(entries);
+}
+
 export default defineConfig([
   {
     ignores: [
@@ -68,7 +78,8 @@ export default defineConfig([
     files: ["**/*.{ts,cts,mts,tsx}"],
     languageOptions: {
       parserOptions: {
-        projectService: true,
+        // ESLint's remaining typed rules use the same two projects as typecheck.
+        project: ["./tsconfig.json", "./tests/tsconfig.json"],
         tsconfigRootDir,
       },
     },
@@ -80,7 +91,7 @@ export default defineConfig([
     },
   },
   {
-    files: ["esbuild.config.mjs", "scripts/**/*.js", "scripts/**/*.mjs", "build/**/*.mjs"],
+    files: ["rolldown.config.mjs", "scripts/**/*.js", "scripts/**/*.mjs", "build/**/*.mjs"],
     rules: {
       "@typescript-eslint/no-require-imports": "off",
       "no-console": "off",
@@ -88,7 +99,7 @@ export default defineConfig([
     },
   },
   {
-    files: ["esbuild.config.mjs", "build/plugins/copy-to-obsidian.mjs"],
+    files: ["rolldown.config.mjs", "build/plugins/copy-to-obsidian.mjs"],
     rules: {
       "obsidianmd/hardcoded-config-path": "off",
     },
@@ -204,6 +215,15 @@ export default defineConfig([
         "error",
         { functions: ["fit", "fdescribe"] },
       ],
+    },
+  },
+  { rules: migratedRules(oxlint.rules) },
+  ...oxlint.overrides.map(({ files, rules }) => ({ files, rules: migratedRules(rules) })),
+  {
+    rules: {
+      // Oxlint's built-in rules cover the TS extension of each of these rules.
+      "@typescript-eslint/no-array-constructor": "off",
+      "@typescript-eslint/no-unused-expressions": "off",
     },
   },
 ]);

@@ -2,7 +2,12 @@ import { execFileSync } from 'node:child_process';
 
 const rootDir = process.cwd();
 
-function report(baseBytes: number, currentBytes: number, currentInputs: Record<string, number>) {
+function report(
+  baseBytes: number,
+  currentBytes: number,
+  currentInputs: Record<string, number>,
+  currentModuleSizes?: string,
+) {
   const inputMap = (inputs: Record<string, number>) => Object.fromEntries(
     Object.entries(inputs).map(([name, bytesInOutput]) => [name, { bytesInOutput }]),
   );
@@ -11,7 +16,7 @@ function report(baseBytes: number, currentBytes: number, currentInputs: Record<s
     import { createBundleReport } from './scripts/bundle-report.mjs';
     const result = createBundleReport({
       baseMetafile: { outputs: { 'main.js': { bytes: ${baseBytes}, inputs: ${JSON.stringify(inputMap(baseInputs))} } } },
-      currentMetafile: { outputs: { 'main.js': { bytes: ${currentBytes}, inputs: ${JSON.stringify(inputMap(currentInputs))} } } },
+      currentMetafile: { moduleSizes: ${JSON.stringify(currentModuleSizes)}, outputs: { 'main.js': { bytes: ${currentBytes}, inputs: ${JSON.stringify(inputMap(currentInputs))} } } },
       skillsCliGzipBytes: 12345,
     });
     process.stdout.write(JSON.stringify(result));
@@ -24,7 +29,7 @@ function report(baseBytes: number, currentBytes: number, currentInputs: Record<s
     warning: boolean;
     delta: number;
     ratio: number;
-    largestInputs: Array<{ input: string; bytes: number; delta: number }>;
+    largestInputs: Array<{ input: string; bytes: number; delta: number | null }>;
   };
 }
 
@@ -55,6 +60,15 @@ describe('bundle report', () => {
 
     expect(result.warning).toBe(true);
     expect(result.markdown).toContain('[!WARNING]');
+  });
+
+  it('compares final bundle bytes across bundlers with different module size metrics', () => {
+    const result = report(100, 90, { 'src/a.ts': 125 }, 'rendered-before-minification');
+
+    expect(result.delta).toBe(-10);
+    expect(result.largestInputs).toEqual([{ input: 'src/a.ts', bytes: 125, delta: null }]);
+    expect(result.markdown).toContain('Module sizes are measured before minification.');
+    expect(result.markdown).toContain('| `src/a.ts` | 125 B | — |');
   });
 
   it('limits the input table to the largest 20 entries', () => {

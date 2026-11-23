@@ -163,7 +163,7 @@ All development flows should be managed using the following standard `npm` scrip
 # Install exact dependencies
 npm ci
 
-# Build CSS once, then start esbuild in watch mode
+# Build CSS once, then start Rolldown in watch mode
 npm run dev
 
 # Concatenate and validate CSS import graph
@@ -172,8 +172,12 @@ npm run build:css
 # Run typechecking (tsc)
 npm run typecheck
 
-# Run linter checks (ESLint + simple-import-sort + obsidianmd rules)
+# Run Oxlint and the remaining ESLint checks with zero warnings
 npm run lint
+
+# Format or check files with Oxfmt
+npm run format -- path/to/file.ts
+npm run format:check -- path/to/file.ts
 
 # Automatically fix linting and import-sorting issues
 npm run lint:fix
@@ -194,7 +198,7 @@ npm run build
 npm run analyze:bundle
 ```
 
-`build/` owns shared esbuild options, externals, runtime compatibility shims, dynamic `node:` import postprocessing, and Obsidian artifact deployment. Production and bundle analysis must both use `createBuildOptions`; change output rewrite regexes only with a matching fixture and regression test.
+`build/` owns shared Rolldown options, externals, runtime compatibility shims, dynamic `node:` import rewriting, and Obsidian artifact deployment. Production and bundle analysis both use `createBuildOptions`. Changes to the import rewriter need a matching fixture and regression test. `npm run lint` runs type-aware Oxlint before ESLint. ESLint owns the Obsidian plugin, React Hooks, import sorting, and rules without matching Oxlint behavior. Keep the ESLint rules disabled only for scopes covered by the Oxlint config.
 
 ```bash
 # Sync package version into manifest.json, versions.json, and the README badge
@@ -231,7 +235,7 @@ Requires `.env.local` with `OBSIDIAN_VAULT` (see manual integration testing belo
 
 For changes that affect **rendered CSS**, do not commit or push until the user has visually confirmed the result in the reloaded UI (Coding Standards #11).
 
-**Obsidian plugin folder layout:** Deploy only `main.js`, `manifest.json`, and `styles.css`. Obsidian may also create `data.json` at runtime. Do not copy CLI entrypoints, `node_modules`, or other pi-coding-agent artifacts into `.obsidian/plugins/pivi/` — the esbuild `copy-to-obsidian` plugin prunes stale files on each build.
+**Obsidian plugin folder layout:** Deploy only `main.js`, `manifest.json`, and `styles.css`. Obsidian may also create `data.json` at runtime. Do not copy CLI entrypoints, `node_modules`, or other pi-coding-agent artifacts into `.obsidian/plugins/pivi/` — the Rolldown `copy-to-obsidian` plugin prunes stale files on each build.
 
 ---
 
@@ -256,7 +260,7 @@ npm run test:coverage
 ---
 
 ### 2. Manual Integration Testing (Obsidian CLI & Auto-Deploy)
-To verify the plugin in a live Obsidian vault environment, utilize the built-in esbuild auto-deploy pipeline and the `obsidian` CLI:
+To verify the plugin in a live Obsidian vault environment, utilize the built-in Rolldown auto-deploy pipeline and the `obsidian` CLI:
 
 #### Step A: Configure local vault path
 Create a `.env.local` file in the root of the project and specify your active vault's absolute path:
@@ -265,7 +269,7 @@ OBSIDIAN_VAULT=/path/to/your/vault
 ```
 
 #### Step B: Build and auto-deploy
-Run the production build command. The `copy-to-obsidian` esbuild plugin will automatically copy the generated files (`main.js`, `manifest.json`, `styles.css`) directly into your vault:
+Run the production build command. The `copy-to-obsidian` Rolldown plugin will automatically copy the generated files (`main.js`, `manifest.json`, `styles.css`) directly into your vault:
 ```bash
 npm run build
 ```
@@ -322,7 +326,7 @@ Keep this section durable. Do not record point-in-time test counts, coverage per
 5. **Comment Why, Not What**: Code should be self-documenting for "what" it does. Write comments specifically to describe "why" design choices, protocols, or edge cases were handled.
 6. **Centralized production logging**: Do not call `console.log`, `console.warn`, or `console.error` directly outside the shared logger/bootstrap boundary. Route actionable warnings and errors through `PluginLogger`; keep intentional best-effort cleanup explicit without dumping user data.
 7. **Pi Dependency Boundary**: see #1; every other package depends on `@pivi/agent` contracts, not raw Pi SDK packages.
-8. **Pre-push Integrity Check**: run the local CI-equivalent suite from Quality gates before opening a pull request. Husky pre-commit runs `typecheck` + `lint` + `check:architecture`. CI rejects any known npm advisory not covered by an unexpired audit allowlist entry, runs the combined boundary checks (including `check:docs-contracts`, `check:pi-pins`, and `check:pi-compatibility`) before tests, and enforces the bundle-size ceiling after the production build. Release tags rerun the shared quality gates before publish. Third-party Actions in privileged workflows are pinned to full commit SHAs.
+8. **Pre-push Integrity Check**: run the local CI-equivalent suite from Quality gates before opening a pull request. Husky pre-commit runs `typecheck` + `lint` + `check:architecture`. CI rejects any known npm advisory not covered by an unexpired audit allowlist entry, runs the combined boundary checks (including `check:docs-contracts`, `check:pi-pins`, and `check:pi-compatibility`), and enforces the bundle-size ceiling after the production build. Release tags rerun the shared quality gates before publish. Third-party Actions in privileged workflows are pinned to full commit SHAs.
 9. **Document decisions**: Keep architecture rationale and end-to-end flows in the relevant numbered `docs/` page. Keep enforceable boundaries, local invariants, gotchas, and verification notes in the nearest owning `AGENTS.md`; prefer package-local guidance over growing root guidance.
 10. **UI text requires i18n (every commit)**: Any change that adds or edits **user-visible** UI copy (settings labels/descriptions, buttons, Notices, placeholders, aria-labels, command/ribbon names, chat chrome, empty states, tool display labels, modals, etc.) **must** ship i18n in the **same commit**:
    - Add/update keys in `packages/pivi-react/src/i18n/locales/en.json` (canonical), then mirror the key tree in **all** other locale JSON files with translations.
@@ -342,7 +346,7 @@ Keep this section durable. Do not record point-in-time test counts, coverage per
 
 ### CI/CD and release
 
-- `.github/workflows/ci.yaml` runs on PRs and pushes to `main`: `npm ci`, `npm run check:dependencies`, `npm run typecheck`, `npm run lint`, `npm run check:boundaries`, `npm run test:coverage`, `npm run build`, and `npm run check:bundle-size`. PR runs additionally build base/head metafiles and append the non-blocking relative-growth report to the job summary.
+- `.github/workflows/ci.yaml` runs on PRs and pushes to `main`: `npm ci`, `npm run check:dependencies`, `npm run typecheck`, `npm run lint`, `npm run check:boundaries`, `npm run test:coverage`, `npm run build`, and `npm run check:bundle-size`. The Ubuntu static/build and coverage jobs run concurrently and both must pass the required `quality-gates` check. PR pushes cancel superseded runs. PR runs additionally build base/head metafiles and append the non-blocking relative-growth report to the job summary.
 - **Obsidian release invariant:** the Git tag and GitHub Release tag must exactly equal the **published** `manifest.json.version` with **no leading `v`**. On `main`, root `manifest.json` tracks the stable community-plugin channel; beta tags may keep the committed root manifest on the previous stable version while the tag-push release workflow writes the release asset manifest from `package.json`.
 - **Beta / pre-release route:** publish semver prerelease tags from the `next` or `beta` branch with `npm run version:beta`, push the annotated tag, and let `.github/workflows/release.yaml` mark the GitHub Release as a Pre-release. Do not bump root `manifest.json` / `versions.json` / the README badge for prerelease versions; `scripts/sync-version.js` skips those files automatically. Full maintainer and tester guidance lives in [docs/10-roadmap-release-and-maintenance.md](docs/10-roadmap-release-and-maintenance.md).
 - **Standard release path:** bump with `npm version patch|minor|major --no-git-tag-version` as appropriate (pre-1.0: `fix` → patch, `feat` → minor), run `node scripts/sync-version.js`, add the matching `CHANGELOG.md` section, commit as `chore(release): prepare x.y.z`, and push `main`. Then create an annotated tag with `git tag -a x.y.z -m "x.y.z"` and push it with `git push origin x.y.z`. The `push.tags` event directly triggers `.github/workflows/release.yaml` and builds the exact tagged commit. README badge updates come from `node scripts/sync-version.js`.

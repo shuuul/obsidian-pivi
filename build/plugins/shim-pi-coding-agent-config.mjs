@@ -22,7 +22,7 @@ const piCodingAgentMessagesEntrypoint = path.join(
   rootDir,
   'node_modules/@earendil-works/pi-coding-agent/dist/core/messages.js',
 );
-const piCodingAgentFacadeNamespace = 'pivi-pi-coding-agent-public-facade';
+const piCodingAgentFacadeId = '\0pi-coding-agent-public-facade';
 
 /**
  * Pivi consumes only public session, compaction, and message exports. The
@@ -31,39 +31,29 @@ const piCodingAgentFacadeNamespace = 'pivi-pi-coding-agent-public-facade';
  */
 export const shimPiCodingAgentSessionEntrypoint = {
   name: 'shim-pi-coding-agent-session-entrypoint',
-  setup(build) {
-    build.onResolve({ filter: /^@earendil-works\/pi-coding-agent$/ }, () => ({
-      path: 'pi-coding-agent-public-facade',
-      namespace: piCodingAgentFacadeNamespace,
-    }));
-    build.onLoad(
-      {
-        filter: /.*/,
-        namespace: piCodingAgentFacadeNamespace,
-      },
-      () => ({
-        contents: [
-          `export * from ${JSON.stringify(piCodingAgentSessionEntrypoint)};`,
-          `export { estimateTokens, findCutPoint } from ${JSON.stringify(piCodingAgentCompactionEntrypoint)};`,
-          `export { convertToLlm } from ${JSON.stringify(piCodingAgentMessagesEntrypoint)};`,
-        ].join('\n'),
-        loader: 'js',
-        resolveDir: rootDir,
-      }),
-    );
+  resolveId: {
+    filter: { id: /^@earendil-works\/pi-coding-agent$/ },
+    handler: () => piCodingAgentFacadeId,
+  },
+  load(id) {
+    if (id !== piCodingAgentFacadeId) return;
+    return [
+      `export * from ${JSON.stringify(piCodingAgentSessionEntrypoint)};`,
+      `export { estimateTokens, findCutPoint } from ${JSON.stringify(piCodingAgentCompactionEntrypoint)};`,
+      `export { convertToLlm } from ${JSON.stringify(piCodingAgentMessagesEntrypoint)};`,
+    ].join('\n');
   },
 };
 
 /** pi-coding-agent config.js uses import.meta.url; replace with Obsidian-safe shim. */
 export const shimPiCodingAgentConfig = {
   name: 'shim-pi-coding-agent-config',
-  setup(build) {
-    build.onResolve({ filter: /config\.js$/ }, (args) => {
-      const resolved = path.normalize(path.join(args.resolveDir, args.path));
-      if (resolved !== path.normalize(piCodingAgentConfigPath)) {
-        return;
-      }
-      return { path: piCodingAgentConfigShim };
-    });
+  resolveId: {
+    filter: { id: /config\.js$/ },
+    handler(id, importer) {
+      if (!importer) return;
+      const resolved = path.resolve(path.dirname(importer), id);
+      if (resolved === piCodingAgentConfigPath) return piCodingAgentConfigShim;
+    },
   },
 };

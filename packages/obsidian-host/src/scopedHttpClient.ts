@@ -57,7 +57,7 @@ interface RawHttpResult {
 }
 
 const defaultLookup: DnsLookupFn = async (hostname) => {
-  const results = await dns.promises.lookup(hostname, { all: true, verbatim: true });
+  const results = await dns.promises.lookup(hostname, { all: true, order: 'verbatim' });
   return results.map((entry) => entry.address);
 };
 

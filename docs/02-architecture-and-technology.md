@@ -87,9 +87,9 @@ Built-in model `customContextLimits` entries remain synced; custom-provider cont
 
 The repository is strict TypeScript targeting ES2022 with bundler resolution, isolated modules, no implicit returns, and unchecked-index protection. npm workspaces expose package subpaths rather than relying on internal relative imports. Workspace package manifests and TypeScript package resolution share that contract: root path aliases cover package roots only, while subpaths must resolve through a package export. `@pivi/agent`, `@pivi/engine-pi`, and `@pivi/obsidian-host` list directory barrels explicitly and expose other source files through one `./*` wildcard; `@pivi/pivi-react` keeps a short explicit list. Architecture checks reject wildcard workspace path aliases, undeclared runtime/type-only dependencies (including literal dynamic imports and re-exports), host runtimes not declared as peers, and cross-package relative imports. The same gate verifies every public export through the installed local workspace links, so root hoisting cannot stand in for package ownership. TypeScript 6 compatibility supports current lint/test tooling; TypeScript 7's native CLI is the authoritative source and test checker.
 
-### esbuild and runtime compatibility
+### Rolldown and runtime compatibility
 
-Shared build options under `build/` produce the Obsidian-compatible bundle, apply Electron/Node compatibility shims, manage externals, deduplicate bundled dependencies, rewrite supported dynamic `node:` imports, and deploy the three plugin artifacts. Production and bundle analysis use the same `createBuildOptions` path so measurements describe the shipped bundle.
+Rolldown produces a single CommonJS bundle for Obsidian through shared options under `build/`. The build applies Electron and Pi compatibility shims, routes free `fetch` calls through Pivi’s scoped client, embeds the standalone Skills CLI, and uses the Oxc parser to rewrite Node builtin imports without changing strings or comments. Production and bundle analysis both use `createBuildOptions`. The development watcher and production build deploy the three Obsidian artifacts after a successful write.
 
 ### Jest and architecture tests
 

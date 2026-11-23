@@ -16,128 +16,74 @@ function runBuildContract(code: string): string {
 }
 
 describe('shared build compatibility', () => {
-  it('uses the same ES2022 runtime options for production and analysis', () => {
-    const output = runBuildContract(`
-      import { createBuildOptions } from './build/create-build-options.mjs';
-      import { gunzipSync } from 'node:zlib';
-      const production = createBuildOptions({ production: true });
-      const analysis = createBuildOptions({ production: true, metafile: true, write: false });
-      const embeddedSkillsCli = Buffer.from(
-        JSON.parse(production.define.__PIVI_EMBEDDED_SKILLS_CLI_GZIP_BASE64__),
-        'base64',
-      );
-      const embeddedSkillsCliSource = gunzipSync(embeddedSkillsCli);
-      process.stdout.write(JSON.stringify({
-        production: {
-          target: production.target,
-          define: { 'process.env.NODE_ENV': production.define['process.env.NODE_ENV'] },
-          banner: production.banner,
-          jsx: production.jsx,
-          jsxImportSource: production.jsxImportSource,
-          external: production.external,
-          metafile: production.metafile,
-          write: production.write,
-          plugins: production.plugins.map((plugin) => plugin.name),
+  it('uses the shared runtime settings and embeds a runnable standalone Skills CLI', () => {
+    const tempDir = mkdtempSync(join(tmpdir(), 'pivi-skills-bundle-'));
+    const cli = join(tempDir, 'skills.mjs');
+    try {
+      const options = JSON.parse(runBuildContract(`
+        import { writeFileSync } from 'node:fs';
+        import { gunzipSync } from 'node:zlib';
+        import { createBuildOptions } from './build/create-build-options.mjs';
+        const { input, output, skillsCliGzipBytes } = await createBuildOptions({ production: true });
+        const { __PIVI_EMBEDDED_SKILLS_CLI_GZIP_BASE64__: cli, ...define } = input.transform.define;
+        const compressed = Buffer.from(JSON.parse(cli), 'base64');
+        writeFileSync(${JSON.stringify(cli)}, gunzipSync(compressed));
+        process.stdout.write(JSON.stringify({
+          target: input.transform.target,
+          define,
+          jsx: input.transform.jsx,
+          external: input.external,
+          format: output.format,
+          codeSplitting: output.codeSplitting,
+          banner: output.banner,
+          minify: output.minify,
+          operatingSystem: compressed[9],
+          hasCorrectCliSize: compressed.byteLength === skillsCliGzipBytes,
+        }));
+      `)) as { external: string[] };
+      expect(options).toMatchObject({
+        target: 'es2022',
+        define: {
+          'process.env.NODE_ENV': '"production"',
+          __PIVI_RELEASE_VERSION__: JSON.stringify(packageVersion),
         },
-        analysis: {
-          target: analysis.target,
-          define: { 'process.env.NODE_ENV': analysis.define['process.env.NODE_ENV'] },
-          banner: analysis.banner,
-          jsx: analysis.jsx,
-          jsxImportSource: analysis.jsxImportSource,
-          external: analysis.external,
-          metafile: analysis.metafile,
-          write: analysis.write,
-          plugins: analysis.plugins.map((plugin) => plugin.name),
-        },
-        embeddedSkillsCli: {
-          compressedBytes: embeddedSkillsCli.byteLength,
-          operatingSystem: embeddedSkillsCli[9],
-          sourceBytes: embeddedSkillsCliSource.byteLength,
-          hasCreateRequireBanner: embeddedSkillsCliSource
-            .toString('utf8')
-            .includes('__piviCreateRequire'),
-        },
-      }));
-    `);
-
-    const options = JSON.parse(output) as {
-      production: {
-        target: string;
-        define: Record<string, string>;
-        banner: Record<string, string>;
-        jsx: string;
-        jsxImportSource: string;
-        external: string[];
-        metafile: boolean;
-        write: boolean;
-        plugins: string[];
-      };
-      analysis: {
-        target: string;
-        define: Record<string, string>;
-        banner: Record<string, string>;
-        jsx: string;
-        jsxImportSource: string;
-        external: string[];
-        metafile: boolean;
-        write: boolean;
-        plugins: string[];
-      };
-      embeddedSkillsCli: {
-        compressedBytes: number;
-        operatingSystem: number;
-        sourceBytes: number;
-        hasCreateRequireBanner: boolean;
-      };
-    };
-
-    expect(options.production).toMatchObject({
-      target: 'es2022',
-      define: { 'process.env.NODE_ENV': '"production"' },
-      banner: { js: `/* Pivi ${packageVersion} */` },
-      jsx: 'automatic',
-      jsxImportSource: 'react',
-      metafile: false,
-      write: true,
-    });
-    expect(options.analysis).toMatchObject({
-      target: 'es2022',
-      define: { 'process.env.NODE_ENV': '"production"' },
-      banner: { js: `/* Pivi ${packageVersion} */` },
-      jsx: 'automatic',
-      jsxImportSource: 'react',
-      metafile: true,
-      write: false,
-    });
-    for (const reactModule of ['react', 'react-dom', 'react-dom/client', 'react/jsx-runtime']) {
-      expect(options.production.external).not.toContain(reactModule);
+        jsx: { runtime: 'automatic', importSource: 'react' },
+        format: 'cjs',
+        codeSplitting: false,
+        banner: `/* Pivi ${packageVersion} */`,
+        minify: true,
+        operatingSystem: 255,
+        hasCorrectCliSize: true,
+      });
+      for (const reactModule of ['react', 'react-dom', 'react-dom/client', 'react/jsx-runtime']) {
+        expect(options.external).not.toContain(reactModule);
+      }
+      expect(execFileSync(process.execPath, [cli, '--version'], { encoding: 'utf8' }).trim())
+        .toMatch(/^\d+\.\d+\.\d+/);
+    } finally {
+      rmSync(tempDir, { recursive: true, force: true });
     }
-    expect(options.analysis.plugins).toEqual(options.production.plugins);
-    expect(options.embeddedSkillsCli.compressedBytes)
-      .toBeLessThan(options.embeddedSkillsCli.sourceBytes);
-    expect(options.embeddedSkillsCli.operatingSystem).toBe(255);
-    expect(options.embeddedSkillsCli.hasCreateRequireBanner).toBe(true);
   });
 
   it('fails the community audit when the bundle references plugin self files', () => {
     const output = runBuildContract(`
-      import { build } from 'esbuild';
+      import { rolldown } from 'rolldown';
       import { assertCommunityAudit } from './build/plugins/assert-community-audit.mjs';
       const attempt = async (contents) => {
+        const bundle = await rolldown({
+          input: '\\0fixture',
+          plugins: [
+            { name: 'fixture', resolveId: (id) => id, load: () => contents },
+            assertCommunityAudit,
+          ],
+        });
         try {
-          const result = await build({
-            stdin: { contents, resolveDir: process.cwd() },
-            bundle: true,
-            platform: 'node',
-            write: false,
-            outfile: 'main.js',
-            plugins: [assertCommunityAudit],
-            logLevel: 'silent',
-          });
-          return result.errors.map((error) => error.text);
+          await bundle.generate({ file: 'main.js', format: 'cjs' });
+          return '';
         } catch (error) {
-          return (error.errors ?? []).map((entry) => entry.text);
+          return error.message;
+        } finally {
+          await bundle.close();
         }
       };
       process.stdout.write(JSON.stringify({
@@ -147,38 +93,36 @@ describe('shared build compatibility', () => {
       }));
     `);
 
-    const result = JSON.parse(output) as {
-      clean: string[];
-      manifest: string[];
-      mainJs: string[];
-    };
-
-    expect(result.clean).toEqual([]);
-    expect(result.manifest).toEqual([
+    const result = JSON.parse(output) as { clean: string; manifest: string; mainJs: string };
+    expect(result.clean).toBe('');
+    expect(result.manifest).toContain(
       'Community audit failed: found plugin self-file reference "manifest.json" in main.js',
-    ]);
-    expect(result.mainJs).toEqual([
+    );
+    expect(result.mainJs).toContain(
       'Community audit failed: found plugin self-file reference "main.js" in main.js',
-    ]);
+    );
   });
 
   it('rewrites dynamic node imports and rejects surviving node specifiers', () => {
     const output = runBuildContract(`
       import { rewriteDynamicNodeImports } from './build/postprocess/rewrite-node-imports.mjs';
-      const rewritten = rewriteDynamicNodeImports('const fs = import("node:fs"); const crypto = import("crypto"); const fsp = loader("node:fs/promises"); const os = loader("node:os");');
+      const rewritten = rewriteDynamicNodeImports('const fs = import("node:fs"); const crypto = import("crypto"); const fsp = importNodeModule("node:fs/promises"); const os = importNodeModule("node:os");').code;
+      const inert = rewriteDynamicNodeImports(\`// import("node:" + "fs")
+const message = "Try import('node:buffer')";\`);
       let rejected = false;
       try {
         rewriteDynamicNodeImports('const fs = import(factory("node:fs"));');
       } catch {
         rejected = true;
       }
-      process.stdout.write(JSON.stringify({ rewritten, rejected }));
+      process.stdout.write(JSON.stringify({ rewritten, rejected, inert }));
     `);
 
-    const result = JSON.parse(output) as { rewritten: string; rejected: boolean };
+    const result = JSON.parse(output) as { rewritten: string; rejected: boolean; inert: null };
 
     expect(result.rewritten).toBe('const fs = Promise.resolve(require("fs")); const crypto = Promise.resolve(require("crypto")); const fsp = Promise.resolve(require("fs/promises")); const os = Promise.resolve(require("os"));');
     expect(result.rejected).toBe(true);
+    expect(result.inert).toBeNull();
   });
 
   it('provides the callable CommonJS signal-exit shape expected by proper-lockfile', () => {
@@ -199,19 +143,25 @@ describe('shared build compatibility', () => {
 
   it('resolves yaml to its tree-shakeable ESM build', () => {
     const inputs = JSON.parse(runBuildContract(`
-      import { build } from 'esbuild';
+      import { rolldown } from 'rolldown';
+      import { join, relative } from 'node:path';
       import { preferBrowserBuilds } from './build/plugins/prefer-browser-builds.mjs';
-      const result = await build({
-        stdin: { resolveDir: process.cwd(), contents: "import { parse } from 'yaml'; console.log(parse('a: 1'));" },
-        bundle: true,
+      const fixture = join(process.cwd(), 'yaml-contract.mjs');
+      const bundle = await rolldown({
+        input: fixture,
         platform: 'node',
-        format: 'cjs',
-        plugins: [preferBrowserBuilds],
-        write: false,
-        metafile: true,
-        logLevel: 'silent',
+        plugins: [
+          { name: 'fixture', resolveId: (id) => id === fixture ? id : null,
+            load: (id) => id === fixture ? "import { parse } from 'yaml'; console.log(parse('a: 1'));" : null },
+          preferBrowserBuilds,
+        ],
       });
-      process.stdout.write(JSON.stringify(Object.keys(result.metafile.inputs)));
+      try {
+        const { output: [chunk] } = await bundle.generate({ format: 'cjs' });
+        process.stdout.write(JSON.stringify(chunk.moduleIds.map((id) => relative(process.cwd(), id).split('\\\\').join('/'))));
+      } finally {
+        await bundle.close();
+      }
     `)) as string[];
 
     expect(inputs).toContain('node_modules/yaml/browser/index.js');
@@ -261,28 +211,29 @@ describe('shared build compatibility', () => {
               process.exitCode = 1;
             });
           `;
-      // esbuild plugins need the async API, so the production resolver runs in a child process.
       const bundledInputs = JSON.parse(runBuildContract(`
-        import { build } from 'esbuild';
-        import { preferBrowserBuilds } from './build/plugins/prefer-browser-builds.mjs';
-        const result = await build({
-          stdin: {
-            resolveDir: ${JSON.stringify(rootDir)},
-            sourcefile: 'google-fetch-contract.ts',
-            loader: 'ts',
-            contents: ${JSON.stringify(contents)},
-          },
-          bundle: true,
-          platform: 'node',
-          format: 'cjs',
-          target: 'es2022',
-          plugins: [preferBrowserBuilds],
-          inject: ['./packages/obsidian-host/src/bundledFetch.ts'],
-          outfile: ${JSON.stringify(outfile)},
-          metafile: true,
-          logLevel: 'silent',
+        import { rolldown } from 'rolldown';
+        import { join, relative } from 'node:path';
+        import { createBuildOptions } from './build/create-build-options.mjs';
+        const { input } = await createBuildOptions({ production: true });
+        const fixture = join(process.cwd(), 'google-fetch-contract.ts');
+        const bundle = await rolldown({
+          ...input,
+          input: fixture,
+          plugins: [
+            { name: 'fixture', resolveId: (id) => id === fixture ? id : null,
+              load: (id) => id === fixture ? ${JSON.stringify(contents)} : null },
+            ...input.plugins.filter((plugin) => plugin.name === 'prefer-browser-builds'),
+          ],
         });
-        process.stdout.write(JSON.stringify(Object.keys(result.metafile.inputs)));
+        try {
+          const { output: [chunk] } = await bundle.write({
+            file: ${JSON.stringify(outfile)}, format: 'cjs', codeSplitting: false,
+          });
+          process.stdout.write(JSON.stringify(chunk.moduleIds.map((id) => relative(process.cwd(), id).split('\\\\').join('/'))));
+        } finally {
+          await bundle.close();
+        }
       `)) as string[];
       // The Node build of the SDK would pull its Vertex/ADC auth and socket stack.
       expect(bundledInputs.filter((input) => /node_modules\/(google-auth-library|ws|gaxios|node-fetch)\//.test(input))).toEqual([]);
