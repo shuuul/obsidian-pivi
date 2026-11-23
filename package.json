@@ -50,7 +50,7 @@
     "node": ">=24.0.0 <25"
   },
   "devDependencies": {
-    "@cfworker/json-schema": "^4.1.1",
+    "@cfworker/json-schema": "^4.1.6",
     "@eslint/js": "^10.0.1",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^7.0.1",
@@ -71,7 +71,7 @@
     "husky": "^9.1.7",
     "jest": "^30.5.2",
     "jest-environment-jsdom": "^30.5.2",
-    "knip": "^6.42.1",
+    "knip": "^6.46.1",
     "obsidian": "^1.13.1",
     "semver": "^7.8.5",
     "ts-jest": "^29.4.15",
@@ -86,8 +86,8 @@
     "@earendil-works/pi-ai": "1.6.0",
     "@earendil-works/pi-coding-agent": "1.6.0",
     "@earendil-works/pi-mcp": "1.6.0",
-    "@lobehub/icons-static-svg": "^1.97.0",
-    "@tanstack/react-virtual": "^3.14.21",
+    "@lobehub/icons-static-svg": "^1.104.0",
+    "@tanstack/react-virtual": "^3.14.26",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "skills": "^1.7.4",
