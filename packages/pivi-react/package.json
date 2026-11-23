@@ -12,8 +12,8 @@
     "./store": "./src/store/index.ts"
   },
   "dependencies": {
-    "@lobehub/icons-static-svg": "^1.97.0",
-    "@tanstack/react-virtual": "^3.14.21",
+    "@lobehub/icons-static-svg": "^1.104.0",
+    "@tanstack/react-virtual": "^3.14.26",
     "@pivi/agent": "*"
   },
   "peerDependencies": {
