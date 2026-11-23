@@ -37,8 +37,7 @@
         "src/**/*.{ts,tsx}"
       ],
       "ignore": [
-        "src/shims/**",
-        "src/bundledFetch.ts"
+        "src/shims/**"
       ],
       "includeEntryExports": true
     },

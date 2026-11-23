@@ -58,7 +58,7 @@ Provider SDKs, MCP/OAuth, WebSearch/WebFetch, image generation, skills distribut
 
 Pivi does **not** assign `window.fetch`. Plugin load and unload leave Obsidian's and other plugins' fetch identity unchanged.
 
-Production bundles resolve free `fetch` identifiers through esbuild `inject` of `packages/obsidian-host/src/bundledFetch.ts`, which forwards to the scoped provider client without mutating globals.
+Production bundles resolve free `fetch` identifiers through Rolldown `transform.inject` of `packages/obsidian-host/src/bundledFetch.ts`, which forwards to the scoped provider client without mutating globals.
 
 ### WebFetch disclosure
 

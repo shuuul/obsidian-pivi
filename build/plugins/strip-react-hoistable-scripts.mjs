@@ -15,30 +15,28 @@ const SCRIPT_CREATION = /createElement\(["']script["']\)/g;
  */
 export const stripReactHoistableScripts = {
   name: 'strip-react-hoistable-scripts',
-  setup(build) {
-    build.onLoad(
-      { filter: /[\\/]react-dom[\\/].*react-dom-client\.(production|development)\.js$/ },
-      async (args) => {
-        let src = await readFile(args.path, 'utf8');
-        const scriptCreations = src.match(SCRIPT_CREATION) ?? [];
+  load: {
+    filter: { id: /[\\/]react-dom[\\/].*react-dom-client\.(production|development)\.js$/ },
+    async handler(id) {
+      let src = await readFile(id, 'utf8');
+      const scriptCreations = src.match(SCRIPT_CREATION) ?? [];
 
-        if (scriptCreations.length !== 3) {
-          throw new Error(
-            `strip-react-hoistable-scripts: expected 3 createElement("script") sites in ${args.path}, found ${scriptCreations.length}`,
-          );
-        }
+      if (scriptCreations.length !== 3) {
+        throw new Error(
+          `strip-react-hoistable-scripts: expected 3 createElement("script") sites in ${id}, found ${scriptCreations.length}`,
+        );
+      }
 
-        src = src.replace(PREINIT_CREATION_BLOCK, '(resource = null)');
-        src = src.replace(ACQUIRE_SCRIPT_BLOCK, 'return null;');
+      src = src.replace(PREINIT_CREATION_BLOCK, '(resource = null)');
+      src = src.replace(ACQUIRE_SCRIPT_BLOCK, 'return null;');
 
-        if (SCRIPT_CREATION.test(src)) {
-          throw new Error(
-            `strip-react-hoistable-scripts: remaining createElement("script") in ${args.path}`,
-          );
-        }
+      if (SCRIPT_CREATION.test(src)) {
+        throw new Error(
+          `strip-react-hoistable-scripts: remaining createElement("script") in ${id}`,
+        );
+      }
 
-        return { contents: src, loader: 'js' };
-      },
-    );
+      return src;
+    },
   },
 };

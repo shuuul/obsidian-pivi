@@ -20,9 +20,5 @@ const browserBuilds = new Map([
 
 export const preferBrowserBuilds = {
   name: 'prefer-browser-builds',
-  setup(build) {
-    build.onResolve({ filter: /^(?:@google\/genai|yaml)$/ }, (args) => ({
-      path: browserBuilds.get(args.path),
-    }));
-  },
+  resolveId: { filter: { id: /^(?:@google\/genai|yaml)$/ }, handler: (id) => browserBuilds.get(id) },
 };

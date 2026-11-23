@@ -9,8 +9,13 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
-  quality-gates:
+  static-and-build:
+    name: Static checks and build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -26,8 +31,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Quality gates
+      - name: Static checks and build
         uses: ./.github/actions/quality-gates
+        with:
+          run-coverage: "false"
 
       - name: Check out pull request base for bundle comparison
         if: github.event_name == 'pull_request'
@@ -48,6 +55,41 @@ jobs:
           npm run analyze:bundle -- --project .bundle-base --output metafile-base.json
           npm run analyze:bundle -- --output metafile-current.json
           node scripts/bundle-report.mjs --base metafile-base.json --current metafile-current.json >> "$GITHUB_STEP_SUMMARY"
+
+  coverage:
+    name: Test with coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Use Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24.19.0"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test with coverage
+        run: npm run test:coverage
+
+  quality-gates:
+    # Keep the required check name and fail if a prerequisite fails or is skipped.
+    if: ${{ always() }}
+    needs: [static-and-build, coverage]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify required jobs passed
+        env:
+          STATIC_RESULT: ${{ needs.static-and-build.result }}
+          COVERAGE_RESULT: ${{ needs.coverage.result }}
+        run: |
+          echo "Static checks and build: $STATIC_RESULT"
+          echo "Test with coverage: $COVERAGE_RESULT"
+          test "$STATIC_RESULT" = success && test "$COVERAGE_RESULT" = success
 
   platform-security:
     name: Platform security (${{ matrix.os }})

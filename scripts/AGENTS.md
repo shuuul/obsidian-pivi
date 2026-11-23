@@ -9,7 +9,7 @@ Small Node scripts backing `package.json` commands. Keep them single-purpose and
 ```mermaid
 flowchart LR
   CSS["build-css.mjs<br/>UI style manifest + release version -> styles.css"] -- "then" --> Build["build.mjs<br/>production orchestration"]
-  Build -- "runs" --> Esbuild["esbuild.config.mjs<br/>main.js bundle"]
+  Build -- "runs" --> Rolldown["rolldown.config.mjs<br/>main.js bundle"]
   Analyze["analyze-bundle.mjs"] -- "writes" --> Meta["metafile.json"]
   Meta --> Report["bundle-report.mjs<br/>base/head delta + top 20 + Skills CLI"]
   BundleSize["check-bundle-size.mjs"] -- "checks" --> Bundle["main.js<br/>5 MB hard ceiling"]
@@ -28,10 +28,10 @@ flowchart LR
 
 ### Build and bundle
 
-- `build.mjs` — Production build: CSS first, then the esbuild bundle.
+- `build.mjs` builds CSS, then bundles `main.js` with Rolldown.
 - `build-css.mjs` — Concatenates the modules listed in `packages/pivi-react/styles/manifest.mjs` into root `styles.css` behind the release-version banner and the Obsidian theme-token mapping. Fails on a missing or unlisted CSS module and on any `!important`.
-- `analyze-bundle.mjs` — Writes esbuild metadata from the shared `build/create-build-options.mjs` without emitting a bundle. `--project` and `--output` let PR CI compare base and head.
-- `bundle-report.mjs` — Turns base/head metafiles into the PR summary: total delta, the 20 largest inputs, and the embedded Skills CLI size. Growth above 100 KiB or 2% is a warning, not a failure.
+- `analyze-bundle.mjs` reads the same Rolldown options as production and writes metadata without emitting or deploying a bundle. `--project` runs the selected revision’s analysis script with its own bundler.
+- `bundle-report.mjs` reports the total byte delta, the 20 largest inputs, and the embedded Skills CLI size. Rolldown measures modules before minification. Compare per-module deltas only when both revisions use the same metric. Growth above 100 KiB or 2% produces an informational warning.
 - `check-bundle-size.mjs` — Fails when the built `main.js` exceeds 5 MB (`npm run check:bundle-size`).
 - `postinstall.mjs` — Creates `.env.local` from the example outside CI when it is missing.
 

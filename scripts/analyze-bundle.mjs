@@ -1,36 +1,56 @@
 #!/usr/bin/env node
-/**
- * Emit esbuild metafile for bundle size analysis (see AGENTS.md Quality review snapshot → main.js size).
- * Run: node scripts/analyze-bundle.mjs
- * Open metafile.json with https://esbuild.github.io/analyze/
- */
 
-import esbuild from 'esbuild';
-import { writeFileSync } from 'fs';
-import path from 'path';
-import { pathToFileURL } from 'url';
+import { execFileSync } from 'node:child_process';
+import { writeFileSync } from 'node:fs';
+import path from 'node:path';
+import { rolldown } from 'rolldown';
+import { createBuildOptions } from '../build/create-build-options.mjs';
 
 function option(name) {
   const index = process.argv.indexOf(name);
-  if (index < 0) return undefined;
-  if (!process.argv[index + 1]) throw new Error(`${name} requires a value.`);
-  return process.argv[index + 1];
+  if (index === -1) return undefined;
+  const value = process.argv[index + 1];
+  if (!value || value.startsWith('--')) throw new Error(`${name} requires a value.`);
+  return value;
 }
 
-const projectRoot = path.resolve(option('--project') ?? '.');
 const outputPath = path.resolve(option('--output') ?? 'metafile.json');
-const buildOptionsUrl = pathToFileURL(
-  path.join(projectRoot, 'build/create-build-options.mjs'),
-).href;
-// eslint-disable-next-line no-unsanitized/method -- PR CI supplies a trusted checkout path so each revision uses its own build contract.
-const { createBuildOptions } = await import(buildOptionsUrl);
+const project = option('--project');
+if (project && path.resolve(project) !== process.cwd()) {
+  // Run the analysis script in the requested revision so it uses its own bundler.
+  execFileSync(process.execPath, ['scripts/analyze-bundle.mjs', '--output', outputPath], {
+    cwd: path.resolve(project),
+    stdio: 'inherit',
+  });
+} else {
+  await analyzeBundle(outputPath);
+}
 
-const buildOptions = createBuildOptions({
-  production: true,
-  metafile: true,
-  write: false,
-});
-const result = await esbuild.build({ ...buildOptions, absWorkingDir: projectRoot });
-
-writeFileSync(outputPath, JSON.stringify(result.metafile));
-console.log(`Wrote ${outputPath} — open at https://esbuild.github.io/analyze/`);
+async function analyzeBundle(destination) {
+  const options = await createBuildOptions({ production: true });
+  const bundle = await rolldown(options.input);
+  try {
+    const { output } = await bundle.generate(options.output);
+    if (output.length !== 1 || output[0].type !== 'chunk') {
+      throw new Error('Expected a single plugin bundle.');
+    }
+    const chunk = output[0];
+    const inputs = Object.fromEntries(
+      Object.entries(chunk.modules).map(([id, module]) => [
+        id.startsWith('\0')
+          ? id.slice(1)
+          : path.relative(options.input.cwd, id).replaceAll('\\', '/'),
+        { bytesInOutput: Buffer.byteLength(module.code ?? '', 'utf8') },
+      ]),
+    );
+    const metadata = {
+      moduleSizes: 'rendered-before-minification',
+      outputs: { [chunk.fileName]: { bytes: Buffer.byteLength(chunk.code), inputs } },
+      skillsCliGzipBytes: options.skillsCliGzipBytes,
+    };
+    writeFileSync(destination, JSON.stringify(metadata));
+    console.log(`Wrote ${destination}`);
+  } finally {
+    await bundle.close();
+  }
+}

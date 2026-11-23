@@ -10,7 +10,5 @@ const signalExitShim = path.join(
 /** proper-lockfile calls require('signal-exit') as a function; avoid ESM interop object wrapper. */
 export const shimSignalExit = {
   name: 'shim-signal-exit',
-  setup(build) {
-    build.onResolve({ filter: /^signal-exit$/ }, () => ({ path: signalExitShim }));
-  },
+  resolveId: { filter: { id: /^signal-exit$/ }, handler: () => signalExitShim },
 };

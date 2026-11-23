@@ -2,7 +2,6 @@
 
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { embeddedSkillsCliGzipBytes } from '../build/create-build-options.mjs';
 
 export const SOFT_GROWTH_BYTES = 100 * 1024;
 export const SOFT_GROWTH_RATIO = 0.02;
@@ -25,12 +24,15 @@ export function createBundleReport({ baseMetafile, currentMetafile, skillsCliGzi
   const delta = current.bytes - base.bytes;
   const ratio = base.bytes === 0 ? 0 : delta / base.bytes;
   const warning = delta > SOFT_GROWTH_BYTES || ratio > SOFT_GROWTH_RATIO;
+  const comparableModuleSizes = baseMetafile.moduleSizes === currentMetafile.moduleSizes;
   const baseInputs = base.inputs ?? {};
   const largestInputs = Object.entries(current.inputs ?? {})
     .map(([input, contribution]) => ({
       input,
       bytes: contribution.bytesInOutput,
-      delta: contribution.bytesInOutput - (baseInputs[input]?.bytesInOutput ?? 0),
+      delta: comparableModuleSizes
+        ? contribution.bytesInOutput - (baseInputs[input]?.bytesInOutput ?? 0)
+        : null,
     }))
     .sort((left, right) => right.bytes - left.bytes)
     .slice(0, 20);
@@ -43,6 +45,12 @@ export function createBundleReport({ baseMetafile, currentMetafile, skillsCliGzi
     `- **Delta:** ${signedBytes(delta)} (${ratio >= 0 ? '+' : ''}${(ratio * 100).toFixed(2)}%)`,
     `- **Embedded Skills CLI (gzip):** ${skillsCliGzipBytes.toLocaleString('en-US')} B`,
   ];
+  if (currentMetafile.moduleSizes === 'rendered-before-minification') {
+    lines.push('', 'Module sizes are measured before minification. The totals above use final bundle bytes.');
+  }
+  if (!comparableModuleSizes) {
+    lines.push('', 'Per-module deltas are unavailable because the base and current builds measure modules differently.');
+  }
 
   if (warning) {
     lines.push('', `> [!WARNING] Bundle growth exceeds the soft review threshold of 100 KiB or 2%. The 5 MiB hard gate is unchanged.`);
@@ -50,7 +58,7 @@ export function createBundleReport({ baseMetafile, currentMetafile, skillsCliGzi
 
   lines.push('', '### Largest inputs', '', '| Input | Current | Delta |', '| --- | ---: | ---: |');
   for (const input of largestInputs) {
-    lines.push(`| \`${input.input.replaceAll('|', '\\|')}\` | ${input.bytes.toLocaleString('en-US')} B | ${signedBytes(input.delta)} |`);
+    lines.push(`| \`${input.input.replaceAll('|', '\\|')}\` | ${input.bytes.toLocaleString('en-US')} B | ${input.delta === null ? '—' : signedBytes(input.delta)} |`);
   }
   lines.push('');
 
@@ -71,7 +79,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const report = createBundleReport({
     baseMetafile,
     currentMetafile,
-    skillsCliGzipBytes: embeddedSkillsCliGzipBytes,
+    skillsCliGzipBytes: currentMetafile.skillsCliGzipBytes,
   });
   process.stdout.write(report.markdown);
 }

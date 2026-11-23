@@ -7,7 +7,6 @@ import {
 } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { rewriteDynamicNodeImportsFile } from '../postprocess/rewrite-node-imports.mjs';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const obsidianPluginDeployFiles = new Set(['main.js', 'manifest.json', 'styles.css']);
@@ -24,12 +23,11 @@ function pruneStaleObsidianPluginArtifacts(pluginPath) {
 }
 
 /**
- * Postprocesses a successful bundle and deploys the plugin artifacts to a configured vault.
+ * Deploys a successful bundle and the other plugin artifacts to a configured vault.
  * A missing or invalid vault path deliberately disables deployment, matching the build contract.
  */
 export function createCopyToObsidianPlugin({
   obsidianVault = process.env.OBSIDIAN_VAULT,
-  bundlePath = path.join(rootDir, 'main.js'),
 } = {}) {
   const pluginPath = obsidianVault && existsSync(obsidianVault)
     ? path.join(obsidianVault, '.obsidian', 'plugins', 'pivi')
@@ -37,32 +35,19 @@ export function createCopyToObsidianPlugin({
 
   return {
     name: 'copy-to-obsidian',
-    setup(build) {
-      build.onEnd((result) => {
-        if (result.errors.length > 0) {
-          return;
+    writeBundle() {
+      if (!pluginPath) return;
+
+      mkdirSync(pluginPath, { recursive: true });
+      pruneStaleObsidianPluginArtifacts(pluginPath);
+
+      for (const file of obsidianPluginDeployFiles) {
+        const source = path.join(rootDir, file);
+        if (existsSync(source)) {
+          copyFileSync(source, path.join(pluginPath, file));
+          console.log(`Copied ${file} to Obsidian plugin folder`);
         }
-
-        rewriteDynamicNodeImportsFile(bundlePath);
-
-        if (!pluginPath) {
-          return;
-        }
-
-        if (!existsSync(pluginPath)) {
-          mkdirSync(pluginPath, { recursive: true });
-        }
-
-        pruneStaleObsidianPluginArtifacts(pluginPath);
-
-        for (const file of obsidianPluginDeployFiles) {
-          const source = path.join(rootDir, file);
-          if (existsSync(source)) {
-            copyFileSync(source, path.join(pluginPath, file));
-            console.log(`Copied ${file} to Obsidian plugin folder`);
-          }
-        }
-      });
+      }
     },
   };
 }

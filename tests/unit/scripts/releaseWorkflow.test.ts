@@ -73,13 +73,22 @@ describe('release provenance workflow', () => {
 
   it('runs the same mandatory quality gates as CI before publication', () => {
     expect(qualityGates).toContain('npm run typecheck');
-    expect(qualityGates).toContain('npm run lint');
+    expect(qualityGates).toContain('run: npm run lint:oxc');
+    expect(qualityGates).toContain('run: npm run lint:eslint');
     expect(qualityGates).toContain('npm run check:boundaries');
     expect(qualityGates).toContain('npm run test:coverage');
     expect(qualityGates).toContain('npm run build');
     expect(qualityGates).toContain('npm run check:bundle-size');
+    expect(qualityGates).toContain('default: "true"');
+    expect(qualityGates).toContain("if: inputs.run-coverage == 'true'");
     expect(ciWorkflow).toContain('uses: ./.github/actions/quality-gates');
+    expect(ciWorkflow).toContain('run-coverage: "false"');
+    expect(ciWorkflow).toContain('run: npm run test:coverage');
+    expect(ciWorkflow).toContain('needs: [static-and-build, coverage]');
+    expect(ciWorkflow).toContain('if: ${{ always() }}');
+    expect(ciWorkflow).toContain('test "$STATIC_RESULT" = success && test "$COVERAGE_RESULT" = success');
     expect(workflow).toContain('uses: ./.github/actions/quality-gates');
+    expect(workflow).not.toContain('run-coverage:');
     expect(workflow.indexOf('uses: ./.github/actions/quality-gates'))
       .toBeLessThan(workflow.indexOf('Create or update GitHub release'));
   });
@@ -95,7 +104,7 @@ describe('release provenance workflow', () => {
     expect(ciWorkflow).toMatch(/permissions:\s*\n\s+contents: read/);
     const checkouts = ciWorkflow.match(/uses:\s+actions\/checkout@[0-9a-f]{40}/g) ?? [];
     const disabledCredentials = ciWorkflow.match(/persist-credentials: false/g) ?? [];
-    expect(checkouts).toHaveLength(3);
+    expect(checkouts).toHaveLength(4);
     expect(disabledCredentials).toHaveLength(checkouts.length);
   });
 

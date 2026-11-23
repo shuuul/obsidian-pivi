@@ -1,5 +1,9 @@
 name: Quality gates
 description: Shared dependency audit, typecheck, lint, boundaries, coverage, build, and bundle-size gates
+inputs:
+  run-coverage:
+    description: Run coverage in this job. Set to false only when another required job runs coverage.
+    default: "true"
 runs:
   using: composite
   steps:
@@ -11,15 +15,20 @@ runs:
       shell: bash
       run: npm run typecheck
 
-    - name: Lint
+    - name: Type-aware Oxlint
       shell: bash
-      run: npm run lint
+      run: npm run lint:oxc
+
+    - name: ESLint compatibility checks
+      shell: bash
+      run: npm run lint:eslint
 
     - name: Architecture boundaries
       shell: bash
       run: npm run check:boundaries
 
     - name: Test with coverage
+      if: inputs.run-coverage == 'true'
       shell: bash
       run: npm run test:coverage
 
