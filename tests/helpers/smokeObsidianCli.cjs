@@ -1,5 +1,4 @@
 // CLI transport double; renderer expressions run against a temporary disk vault.
-/* eslint-disable @typescript-eslint/no-require-imports -- Node --require preloads this CommonJS transport double before the ESM runner. */
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
@@ -129,4 +128,3 @@ async function runHarness(request, state, base, scenario) {
   throw new Error('Unsupported smoke operation');
 }
 
-/* eslint-enable @typescript-eslint/no-require-imports -- End CommonJS preload exemption. */

@@ -180,6 +180,7 @@ export class PiviViewHost extends ItemView {
         throw new AggregateError(
           [mountError, cleanupError],
           'Pivi chat mount and cleanup both failed.',
+          { cause: cleanupError },
         );
       }
       throw mountError;

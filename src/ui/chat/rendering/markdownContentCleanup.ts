@@ -13,14 +13,14 @@ function isEmptyParagraph(p: HTMLParagraphElement): boolean {
 /** Remove empty edge paragraphs produced by leading/trailing newlines in markdown. */
 export function trimEmptyEdgeParagraphs(container: HTMLElement): void {
   let next = container.firstElementChild;
-  while (next instanceof HTMLParagraphElement && isEmptyParagraph(next)) {
+  while (next?.instanceOf(HTMLParagraphElement) && isEmptyParagraph(next)) {
     const toRemove = next;
     next = next.nextElementSibling;
     toRemove.remove();
   }
 
   let prev = container.lastElementChild;
-  while (prev instanceof HTMLParagraphElement && isEmptyParagraph(prev)) {
+  while (prev?.instanceOf(HTMLParagraphElement) && isEmptyParagraph(prev)) {
     const toRemove = prev;
     prev = prev.previousElementSibling;
     toRemove.remove();

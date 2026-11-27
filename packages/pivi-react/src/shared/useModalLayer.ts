@@ -57,9 +57,8 @@ export function useModalLayer({
     const layer = layerRef.current;
     if (!layer) return undefined;
     const ownerDocument = layer.ownerDocument;
-    triggerRef.current = ownerDocument.activeElement instanceof HTMLElement
-      ? ownerDocument.activeElement
-      : null;
+    const activeElement = ownerDocument.activeElement;
+    triggerRef.current = activeElement?.instanceOf(HTMLElement) ? activeElement : null;
 
     const focusTarget = resolveInitialFocus(layer, initialFocus);
     if (focusTarget) {

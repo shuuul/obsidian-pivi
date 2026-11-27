@@ -28,9 +28,10 @@ export function createInlineMentionBadge(
     onClick: getMentionBadgeNavigation(app, token),
     onRemove: token.kind === 'inline-context' || token.kind === 'selected-text-template'
       ? (_token, event) => {
-        if (!(event.currentTarget instanceof HTMLElement)) return;
-        const badge = event.currentTarget.closest('.pivi-context-badge');
-        if (badge instanceof HTMLElement) {
+        const target = event.currentTarget as Node | null;
+        if (!target?.instanceOf(HTMLElement)) return;
+        const badge = target.closest('.pivi-context-badge');
+        if (badge?.instanceOf(HTMLElement)) {
           removeContextBadgeFromComposer(badge);
         }
       }

@@ -618,6 +618,7 @@ export class SessionTreeStore {
           throw new AggregateError(
             [error, restoreError],
             `Session fork failed and the source session could not be reopened: ${source}`,
+            { cause: restoreError },
           );
         }
       }

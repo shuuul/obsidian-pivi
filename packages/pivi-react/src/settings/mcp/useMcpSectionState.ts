@@ -330,7 +330,9 @@ export function useMcpSectionState(mcp: McpPorts, feedback: SettingsFeedbackPort
       if (result.success) dispatch({ type: 'set_tools', name: server.name, tools: result.tools });
       return result;
     } catch (cause) {
-      throw new Error(mcpErrorText(cause, t('settings.mcp.authFailed', { name: server.name })));
+      throw new Error(mcpErrorText(cause, t('settings.mcp.authFailed', { name: server.name })), {
+        cause,
+      });
     } finally {
       dispatch({ type: 'set_busy', busy: null });
     }
@@ -343,7 +345,9 @@ export function useMcpSectionState(mcp: McpPorts, feedback: SettingsFeedbackPort
       await mcp.logout(server.name);
     } catch (cause) {
       dispatch({ type: 'set_busy', busy: null });
-      throw new Error(mcpErrorText(cause, t('settings.mcp.authFailed', { name: server.name })));
+      throw new Error(mcpErrorText(cause, t('settings.mcp.authFailed', { name: server.name })), {
+        cause,
+      });
     }
     dispatch({ type: 'set_auth', name: server.name, status: 'not_authenticated' });
     dispatch({ type: 'set_busy', busy: null });

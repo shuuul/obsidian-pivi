@@ -51,6 +51,7 @@ async function cleanupFailedChatMount(
     throw new AggregateError(
       [mountError, cleanupError],
       'Failed to mount and clean up the chat surface.',
+      { cause: cleanupError },
     );
   } finally {
     root.unmount();

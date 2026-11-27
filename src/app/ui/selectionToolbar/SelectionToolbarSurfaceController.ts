@@ -407,7 +407,7 @@ export class SelectionToolbarSurfaceController {
     }
     if (!stillOwnsSnapshot(this.plugin, snapshot, origin)) return;
     const file = origin.file;
-    let currentNote = '';
+    let currentNote: string;
     try {
       currentNote = file ? await this.plugin.app.vault.read(file) : '';
     } catch {

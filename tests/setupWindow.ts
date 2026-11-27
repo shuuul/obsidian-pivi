@@ -78,3 +78,17 @@ if (!testWindow.cancelAnimationFrame) {
     globalThis.clearTimeout(handle);
   };
 }
+
+// Obsidian augments Node.prototype.instanceOf for cross-window DOM checks.
+// This shim covers the main jsdom realm only; iframe fixtures install their own.
+// Within this realm, same-realm instanceof implements the same contract.
+const nodePrototype = globalThis.Node?.prototype as (Node & { instanceOf?: unknown }) | undefined;
+if (nodePrototype && typeof nodePrototype.instanceOf !== 'function') {
+  Object.defineProperty(nodePrototype, 'instanceOf', {
+    configurable: true,
+    writable: true,
+    value(this: Node, type: new () => unknown): boolean {
+      return this instanceof type;
+    },
+  });
+}

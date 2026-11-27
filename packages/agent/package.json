@@ -17,6 +17,6 @@
     "./*": "./src/*.ts"
   },
   "dependencies": {
-    "@earendil-works/pi-mcp": "1.6.0"
+    "@earendil-works/pi-mcp": "1.7.0"
   }
 }
