@@ -3,10 +3,7 @@ import * as os from 'os';
 import * as path from 'path';
 
 import type { ProcessRunner } from '../../ports';
-import {
-  DEFAULT_VAULT_SKILL_FOLDER_NAMES,
-  DEFAULT_VAULT_SKILLS_SLUG,
-} from './defaultVaultSkills';
+import { DEFAULT_VAULT_SKILL_FOLDER_NAMES, DEFAULT_VAULT_SKILLS_SLUG } from './defaultVaultSkills';
 import { getSpawnEnvWithEnhancedPath, type SkillsEnvironmentOptions } from './env';
 import { loadVaultSkills, SKILL_DISABLED_MARKER } from './loadVaultSkills';
 import { PIVI_SKILLS_PATH } from './paths';
@@ -18,11 +15,12 @@ import {
 } from './skillPublicationTransaction';
 import { importCliSkills } from './skillsCliImport';
 import {
-  publishValidatedSkillTree,
-  SkillStageValidationError,
-  stageSkillTreeFromSource,
-  validateStagedSkillCollection,
-} from './skillStagePublish';
+  changedSkillsForCli,
+  emptySkillsCliSnapshot,
+  mirrorSkillsForCli,
+  type SkillsCliOperationContext,
+} from './skillsCliMirror';
+import { validateStagedSkillCollection } from './skillStagePublish';
 
 export interface VaultSkillsServiceOptions {
   processRunner?: ProcessRunner;
@@ -59,7 +57,6 @@ export interface RemoteSkillEntry {
   description: string;
 }
 
-
 const SKILLS_INSTALL_TIMEOUT_MS = 120_000;
 
 const SKILLS_CLI_METADATA_FILES = ['skills-lock.json', '.skills.json'] as const;
@@ -94,9 +91,11 @@ export function normalizeSkillSlug(input: string): string {
 }
 
 function normalizeRequestedSkillNames(skillNames?: string[]): string[] {
-  return skillNames
-    ?.map((name) => name.trim())
-    .filter((name, index, names) => name.length > 0 && names.indexOf(name) === index) ?? [];
+  return (
+    skillNames
+      ?.map((name) => name.trim())
+      .filter((name, index, names) => name.length > 0 && names.indexOf(name) === index) ?? []
+  );
 }
 
 function stripAnsi(input: string): string {
@@ -146,7 +145,6 @@ function ensurePiviSkillsDir(vaultPath: string): string {
   return dir;
 }
 
-  const stagingRoot = path.join(vaultPath, SKILLS_STAGING_ROOT, `sync-${process.pid}-${Date.now()}`);
 export class VaultSkillsService {
   private static readonly publicationTails = new Map<string, Promise<void>>();
   private cleanupFailurePending = false;
@@ -176,7 +174,9 @@ export class VaultSkillsService {
     await new SkillPublicationTransaction({
       vaultPath: this.vaultPath,
       publicationRenameSync: this.options.publicationRenameSync,
-      onCleanupFailure: () => { this.cleanupFailurePending = true; },
+      onCleanupFailure: () => {
+        this.cleanupFailurePending = true;
+      },
     }).recoverIncompleteTransactions({
       onPublishedWithoutMetadata: this.metadataRecovery,
     });
@@ -236,9 +236,17 @@ export class VaultSkillsService {
       },
       async (operationRoot, context) => {
         await this.runSkillsAdd(source, skillNames, operationRoot, options?.signal);
-        const synced = this.importOperationSkills(operationRoot, before, undefined, operationRoot);
+        const synced = importCliSkills(
+          operationRoot,
+          before,
+          undefined,
+          operationRoot,
+          changedSkillsForCli(operationRoot, context.cliSnapshot, true),
+        );
         if (synced.length === 0) {
-          throw new Error('Install finished but the isolated skills operation produced no new Skill folders.');
+          throw new Error(
+            'Install finished but the isolated skills operation produced no new Skill folders.',
+          );
         }
         return synced;
       },
@@ -250,7 +258,11 @@ export class VaultSkillsService {
     const operationRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'pivi-skills-list-'));
     try {
       const output = await this.runSkillsCommand(
-        ['add', source, '--list'], 'list', operationRoot, signal, operationRoot,
+        ['add', source, '--list'],
+        'list',
+        operationRoot,
+        signal,
+        operationRoot,
       );
       return parseRemoteSkillsListOutput(output);
     } finally {
@@ -266,26 +278,28 @@ export class VaultSkillsService {
     skipFolders: ReadonlySet<string>,
     hooks?: SkillsPublicationHooks,
   ): Promise<string[]> {
-    const bundleFolders = DEFAULT_VAULT_SKILL_FOLDER_NAMES.filter(
-      (name) => !skipFolders.has(name),
-    );
+    const bundleFolders = DEFAULT_VAULT_SKILL_FOLDER_NAMES.filter((name) => !skipFolders.has(name));
     if (bundleFolders.length === 0) {
-      await this.withOperationRoot('default-update', root => (
-        this.runSkillsAdd(DEFAULT_VAULT_SKILLS_SLUG, [], root)
-      ));
+      await this.withOperationRoot('default-update', (root) =>
+        this.runSkillsAdd(DEFAULT_VAULT_SKILLS_SLUG, [], root),
+      );
       hooks?.beforePublish?.();
       await hooks?.afterPublish?.();
       return [];
     }
 
-    return this.runIsolatedPublication(
-      'default-update',
-      hooks,
-      async operationRoot => {
-        await this.runSkillsAdd(DEFAULT_VAULT_SKILLS_SLUG, [], operationRoot);
-        return this.importOperationSkills(operationRoot, new Set(), new Set(bundleFolders), operationRoot);
-      },
-    );
+    return this.runIsolatedPublication('default-update', hooks, async (operationRoot, context) => {
+      await this.runSkillsAdd(DEFAULT_VAULT_SKILLS_SLUG, [], operationRoot);
+      return importCliSkills(
+        operationRoot,
+        new Set(),
+        new Set(bundleFolders),
+        operationRoot,
+        changedSkillsForCli(operationRoot, context.cliSnapshot, true),
+        false,
+        skipFolders,
+      );
+    });
   }
 
   remove(folderName: string): void {
@@ -309,19 +323,38 @@ export class VaultSkillsService {
     }
     const liveTarget = path.join(this.vaultPath, PIVI_SKILLS_PATH, safeName);
     if (!fs.existsSync(liveTarget)) throw new Error(`Skill folder not found: ${safeName}`);
-    await this.runIsolatedPublication('remove', hooks, async operationRoot => {
-      const stagedTarget = path.join(operationRoot, PIVI_SKILLS_PATH, safeName);
-      fs.rmSync(stagedTarget, { recursive: true, force: true });
-    });
+    await this.runIsolatedPublication(
+      'remove',
+      hooks,
+      async (operationRoot) => {
+        const stagedTarget = path.join(operationRoot, PIVI_SKILLS_PATH, safeName);
+        fs.rmSync(stagedTarget, { recursive: true, force: true });
+      },
+      false,
+    );
   }
 
-  async updateAll(signal?: AbortSignal, hooks?: SkillsPublicationHooks | (() => void)): Promise<string[]> {
+  async updateAll(
+    signal?: AbortSignal,
+    hooks?: SkillsPublicationHooks | (() => void),
+  ): Promise<string[]> {
     const folders = new Set(this.listDirNames(path.join(this.vaultPath, PIVI_SKILLS_PATH)));
     const publicationHooks = typeof hooks === 'function' ? { beforePublish: hooks } : hooks;
-    return this.runIsolatedPublication('update-all', publicationHooks, async operationRoot => {
-      await this.runSkillsUpdate([], operationRoot, signal);
-      return this.importOperationSkills(operationRoot, new Set(), folders, operationRoot);
-    });
+    return this.runIsolatedPublication(
+      'update-all',
+      publicationHooks,
+      async (operationRoot, context) => {
+        await this.runSkillsUpdate([], operationRoot, signal);
+        return importCliSkills(
+          operationRoot,
+          new Set(),
+          folders,
+          operationRoot,
+          changedSkillsForCli(operationRoot, context.cliSnapshot, false),
+          false,
+        );
+      },
+    );
   }
 
   async updateSkill(
@@ -332,7 +365,12 @@ export class VaultSkillsService {
   ): Promise<string[]> {
     const normalizedSkillName = skillName.trim();
     const safeFolderName = path.basename(folderName.trim());
-    if (!normalizedSkillName || !safeFolderName || safeFolderName === '.' || safeFolderName === '..') {
+    if (
+      !normalizedSkillName ||
+      !safeFolderName ||
+      safeFolderName === '.' ||
+      safeFolderName === '..'
+    ) {
       throw new Error('Invalid skill name.');
     }
 
@@ -342,7 +380,14 @@ export class VaultSkillsService {
       publicationHooks,
       async (operationRoot, context) => {
         await this.runSkillsUpdate([normalizedSkillName], operationRoot, signal);
-        return this.importOperationSkills(operationRoot, new Set(), new Set([safeFolderName]), operationRoot);
+        return importCliSkills(
+          operationRoot,
+          new Set(),
+          new Set([safeFolderName]),
+          operationRoot,
+          changedSkillsForCli(operationRoot, context.cliSnapshot, false),
+          false,
+        );
       },
     );
   }
@@ -361,7 +406,12 @@ export class VaultSkillsService {
       .map((entry) => entry.name);
   }
 
-  private runSkillsAdd(source: string, skillNames: string[] = [], cwd?: string, signal?: AbortSignal): Promise<void> {
+  private runSkillsAdd(
+    source: string,
+    skillNames: string[] = [],
+    cwd?: string,
+    signal?: AbortSignal,
+  ): Promise<void> {
     const args = ['add', source, '--copy', '-y'];
     for (const skillName of skillNames) {
       args.push('--skill', skillName);
@@ -369,13 +419,22 @@ export class VaultSkillsService {
     return this.runSkillsCommand(args, 'add', cwd, signal).then(() => undefined);
   }
 
-  private runSkillsUpdate(skillNames: string[] = [], cwd?: string, signal?: AbortSignal): Promise<void> {
-    return this.runSkillsCommand(['update', ...skillNames, '-p', '-y'], 'update', cwd, signal)
-      .then(() => undefined);
+  private runSkillsUpdate(
+    skillNames: string[] = [],
+    cwd?: string,
+    signal?: AbortSignal,
+  ): Promise<void> {
+    return this.runSkillsCommand(['update', ...skillNames, '-p', '-y'], 'update', cwd, signal).then(
+      () => undefined,
+    );
   }
 
   private async runSkillsCommand(
-    args: string[], commandName: string, cwd?: string, signal?: AbortSignal, approvedRoot?: string,
+    args: string[],
+    commandName: string,
+    cwd?: string,
+    signal?: AbortSignal,
+    approvedRoot?: string,
   ): Promise<string> {
     if (!this.options.processRunner) {
       throw new Error('A ProcessRunner is required to run skills CLI commands.');
@@ -406,9 +465,11 @@ export class VaultSkillsService {
         signal,
       });
       if (result.termination !== 'exit' || result.exitCode !== 0) {
-        const detail = result.stderr.trim() || result.stdout.trim()
-          || result.spawnError
-          || (result.signal ? `signal ${result.signal}` : `termination ${result.termination}`);
+        const detail =
+          result.stderr.trim() ||
+          result.stdout.trim() ||
+          result.spawnError ||
+          (result.signal ? `signal ${result.signal}` : `termination ${result.termination}`);
         throw new Error(`skills ${commandName} failed: ${detail}`);
       }
       return result.stdout;
@@ -445,35 +506,48 @@ export class VaultSkillsService {
     operation: (root: string, context: SkillsCliOperationContext) => Promise<T>,
     mirrorCli = true,
   ): Promise<T> {
-    const publicationHooks: TransactionPublicationHooks = typeof hooks === 'function'
-      ? { beforePublish: hooks }
-      : (hooks ?? {});
+    const publicationHooks: TransactionPublicationHooks =
+      typeof hooks === 'function' ? { beforePublish: hooks } : (hooks ?? {});
     return this.withPublicationLock(async () => {
       await this.prepareWorkspaceWithoutLock();
-      return this.withOperationRoot(name, async root => {
-        const skillsDir = path.join(this.vaultPath, PIVI_SKILLS_PATH);
-        const stagedSkills = path.join(root, PIVI_SKILLS_PATH);
-        if (fs.existsSync(skillsDir)) {
-          // Validate before copying because Windows may dereference directory
-          // junctions during cpSync, which would hide a symlink from the
-          // staged-tree validator.
-          validateStagedSkillCollection(skillsDir);
-          fs.cpSync(skillsDir, stagedSkills, { recursive: true });
-        }
-        const result = await operation(root);
-        return new SkillPublicationTransaction({
-          vaultPath: this.vaultPath,
-          publicationRenameSync: this.options.publicationRenameSync,
-          onCleanupFailure: () => { this.cleanupFailurePending = true; },
-        }).publish(stagedSkills, skillsDir, root, result, publicationHooks);
-      }, false);
+      return this.withOperationRoot(
+        name,
+        async (root) => {
+          const skillsDir = path.join(this.vaultPath, PIVI_SKILLS_PATH);
+          const stagedSkills = path.join(root, PIVI_SKILLS_PATH);
+          if (fs.existsSync(skillsDir)) {
+            // Validate before copying because Windows may dereference directory
+            // junctions during cpSync, which would hide a symlink from the
+            // staged-tree validator.
+            validateStagedSkillCollection(skillsDir);
+            fs.cpSync(skillsDir, stagedSkills, { recursive: true });
+          }
+          const cliSnapshot = mirrorCli
+            ? mirrorSkillsForCli(stagedSkills, root)
+            : emptySkillsCliSnapshot();
+          const result = await operation(root, { cliSnapshot });
+          return new SkillPublicationTransaction({
+            vaultPath: this.vaultPath,
+            publicationRenameSync: this.options.publicationRenameSync,
+            onCleanupFailure: () => {
+              this.cleanupFailurePending = true;
+            },
+          }).publish(stagedSkills, skillsDir, root, result, publicationHooks);
+        },
+        false,
+      );
     });
   }
 
   private async withPublicationLock<T>(operation: () => Promise<T>): Promise<T> {
     const previous = VaultSkillsService.publicationTails.get(this.vaultPath) ?? Promise.resolve();
     let release!: () => void;
-    const current = previous.then(() => new Promise<void>(resolve => { release = resolve; }));
+    const current = previous.then(
+      () =>
+        new Promise<void>((resolve) => {
+          release = resolve;
+        }),
+    );
     VaultSkillsService.publicationTails.set(this.vaultPath, current);
     await previous;
     try {
@@ -485,7 +559,4 @@ export class VaultSkillsService {
       }
     }
   }
-          candidates.push(...fs.readdirSync(nested).map(name => path.join(nested, name)));
-          copySkillTree(candidate, folderName, dest, existingBefore, installed, destinationVaultPath, overwriteFolders);
-
 }
