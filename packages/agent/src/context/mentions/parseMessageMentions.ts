@@ -208,16 +208,25 @@ function normalizeVaultLookupKey(vault: MentionVaultLookup, value: string): stri
   return vault.normalizeLookupKey?.(value) ?? value;
 }
 
-function buildVaultMentionLookup(vault: MentionVaultLookup): Map<string, string> {
-  const lookup = new Map<string, string>();
+type VaultMentionFile = ReturnType<MentionVaultLookup['getFiles']>[number];
+
+interface VaultMentionIndex {
+  readonly paths: Map<string, string>;
+  readonly files: Map<string, VaultMentionFile>;
+}
+
+function buildVaultMentionLookup(vault: MentionVaultLookup): VaultMentionIndex {
+  const paths = new Map<string, string>();
+  const files = new Map<string, VaultMentionFile>();
   for (const file of vault.getFiles()) {
-    lookup.set(normalizeVaultLookupKey(vault, normalizeMentionPath(file.path)), file.path);
+    paths.set(normalizeVaultLookupKey(vault, normalizeMentionPath(file.path)), file.path);
+    files.set(file.path, file);
   }
 
   for (const folder of vault.getFolders()) {
-    lookup.set(normalizeVaultLookupKey(vault, normalizeMentionPath(folder.path)), folder.path);
+    paths.set(normalizeVaultLookupKey(vault, normalizeMentionPath(folder.path)), folder.path);
   }
-  return lookup;
+  return { paths, files };
 }
 
 function tryParseVaultWikilink(
@@ -254,10 +263,11 @@ function tryParseVaultByLookup(
   index: number,
   ctx: MentionBadgeParseContext,
 ): FileMentionPart | FolderMentionPart | null {
+  const lookup = buildVaultMentionLookup(ctx.vault);
   const match = findBestMentionLookupMatch(
     text,
     index + 1,
-    buildVaultMentionLookup(ctx.vault),
+    lookup.paths,
     normalizeMentionPath,
     (value) => normalizeVaultLookupKey(ctx.vault, value),
   );
@@ -282,7 +292,9 @@ function tryParseVaultByLookup(
     };
   }
 
-  const file = ctx.vault.getFiles().find((candidate) => candidate.path === match.resolvedPath);
+  // Enumeration is authoritative when a host's direct path lookup misses a
+  // canonical file path; keep the badge instead of falling back to plain text.
+  const file = lookup.files.get(match.resolvedPath);
   if (file) {
     return {
       kind: 'file',

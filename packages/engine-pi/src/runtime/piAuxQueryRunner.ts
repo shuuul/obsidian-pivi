@@ -152,9 +152,8 @@ export class PiAuxQueryRunner<TModel extends PiAuxQueryModel = PiAuxQueryModel> 
       throw new Error(`Credentials not found for provider: ${model.provider}`);
     }
 
-    let agent: Agent | null = null;
     const readBudget = createPiReadBudget(() => calculateReadToolMaxChars());
-    agent = new Agent({
+    const agent = new Agent({
       initialState: {
         model,
         systemPrompt: config.systemPrompt,

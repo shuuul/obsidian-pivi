@@ -51,7 +51,7 @@ export async function submitInlineEditTurn(
     return null;
   }
 
-  let tab: Awaited<ReturnType<TabManager['createTab']>> | null = null;
+  let tab: Awaited<ReturnType<TabManager['createTab']>> | null;
   try {
     tab = await manager.createTab(undefined, undefined, {
       activate: false,

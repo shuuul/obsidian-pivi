@@ -93,6 +93,7 @@ export async function runDevelopmentRealHostSmoke(
       throw new AggregateError(
         [error, cleanupError],
         `Smoke run and cleanup failed: ${error instanceof Error ? error.message : String(error)}`,
+        { cause: cleanupError },
       );
     }
     throw error;

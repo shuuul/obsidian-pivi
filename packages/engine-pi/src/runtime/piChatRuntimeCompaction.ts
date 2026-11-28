@@ -571,7 +571,7 @@ export async function compactCurrentSession(
     const initialSessionKey = sessionKey(deps);
     const trimmedInstructions = instructions?.trim();
     const runManualWithInstructions = reason === 'manual' && !!trimmedInstructions;
-    let result: PiChatCompactionResult | null = null;
+    let result: PiChatCompactionResult | null;
     try {
       result = await existing;
     } catch (error) {
@@ -581,7 +581,10 @@ export async function compactCurrentSession(
         || sessionKey(deps) !== initialSessionKey
         || modelKey(deps) !== initialModelKey
       ) {
-        throw new Error('Session or model changed while context compaction was waiting for the active run.');
+        throw new Error(
+          'Session or model changed while context compaction was waiting for the active run.',
+          { cause: error },
+        );
       }
       if (deps.agent) {
         deps.agent.state.messages = tree.loadAgentMessages();

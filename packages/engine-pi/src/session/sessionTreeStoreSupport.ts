@@ -148,6 +148,7 @@ export function createBranchedSessionWithCompensation(
       throw new AggregateError(
         [primaryError, cleanupError],
         `Session fork failed and left a partial file at ${candidate}`,
+        { cause: cleanupError },
       );
     }
     throw primaryError;

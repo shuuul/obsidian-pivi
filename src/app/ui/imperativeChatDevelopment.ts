@@ -392,7 +392,7 @@ export async function runDevelopmentTabSwitching(
   const runId = Date.now();
   const tabIds: TabId[] = [];
   let switches = 0;
-  let startedAt = 0;
+  let startedAt: number;
 
   try {
     for (let index = 0; index < DEVELOPMENT_SWITCHING_TAB_COUNT; index += 1) {

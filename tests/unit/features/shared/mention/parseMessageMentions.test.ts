@@ -43,6 +43,22 @@ describe('parseMessageMentions', () => {
     expect(messageTextHasMentionBadges('plain text')).toBe(false);
   });
 
+  it('uses enumerated files when the direct path lookup misses', () => {
+    const vault = createVaultLookup();
+    const parts = parseMessageMentions('Check @notes/readme.md', createContext({
+      vault: {
+        ...vault,
+        getByPath: () => null,
+        resolveWikilink: () => null,
+      },
+    }));
+
+    expect(parts).toEqual([
+      { kind: 'plain', text: 'Check ' },
+      { kind: 'file', raw: '@notes/readme.md', path: 'notes/readme.md', label: 'readme.md' },
+    ]);
+  });
+
   it('parses selected-text command variables only for command template editors', () => {
     const text = 'Review {{selected_text}} then {{selected_text}}';
     expect(parseMessageMentions(text, createContext())).toEqual([

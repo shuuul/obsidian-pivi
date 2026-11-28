@@ -140,10 +140,10 @@ async function exchangeAuthorizationCode(
     }
   } catch (error) {
     if (signal?.aborted) {
-      throw new Error('Login cancelled');
+      throw new Error('Login cancelled', { cause: error });
     }
     if (controller.signal.aborted) {
-      throw new Error('OpenRouter OAuth token exchange timed out');
+      throw new Error('OpenRouter OAuth token exchange timed out', { cause: error });
     }
     throw error;
   } finally {

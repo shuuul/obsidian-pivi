@@ -10,8 +10,9 @@ const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../.
  * - `@google/genai`: the Node build statically imports google-auth-library, ws, and their
  *   HTTP stack for Vertex/ADC auth and Live sockets. Pivi ships only the API-key Google
  *   provider, which the web build serves through Pi's injected fetch.
- * - `yaml`: pi-agent-core's harness imports it for skills and prompt templates Pivi does
- *   not use. The Node entry is CommonJS and stays whole; the ESM build tree-shakes away.
+ * - `yaml`: pi-coding-agent's frontmatter parser imports it, but that module sits outside
+ *   Pivi's narrow facade. The Node entry is CommonJS and stays whole; the ESM build
+ *   tree-shakes away if a future facade path reaches it.
  */
 const browserBuilds = new Map([
   ['@google/genai', path.join(rootDir, 'node_modules/@google/genai/dist/web/index.mjs')],

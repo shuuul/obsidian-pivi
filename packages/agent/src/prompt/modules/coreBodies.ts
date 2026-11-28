@@ -80,7 +80,7 @@ export const OBSIDIAN_CONTEXT_DEFAULT_BODY = `- **Structure**: Files are Markdow
 
 - **Tags**: #tag-name for categorization.
 - **Dataview**: You may encounter Dataview queries (in \`\`\`dataview\`\`\` blocks). Do not break them unless asked.
-- **Vault Config**: \`.obsidian/\` contains internal config. Touch only if you know what you are doing.`;
+- **Vault Config**: Obsidian's configuration folder at the vault root contains internal settings. Touch only if you know what you are doing.`;
 
 export const MARKDOWN_HYGIENE_DEFAULT_BODY = `When writing or editing vault Markdown, avoid accidentally triggering Obsidian syntax that changes navigation, tags, tasks, embeds, or rendered structure:
 

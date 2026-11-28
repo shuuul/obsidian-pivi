@@ -10,8 +10,12 @@ const DRAG_THRESHOLD_PX = 8;
 const INTERACTIVE_SELECTOR = 'button, input, textarea, select, [contenteditable="true"]';
 const SORTABLE_SURFACE_SELECTOR = '[data-sortable-surface]';
 
+function isElementNode(target: EventTarget | null): target is Element {
+  return target !== null && 'instanceOf' in target && (target as Node).instanceOf(Element);
+}
+
 function isExcludedPointerTarget(target: EventTarget | null, currentTarget: EventTarget): boolean {
-  if (!(target instanceof Element)) return false;
+  if (!isElementNode(target)) return false;
   if (target.closest(SORTABLE_SURFACE_SELECTOR)) return false;
   const interactive = target.closest(INTERACTIVE_SELECTOR);
   return interactive !== null && interactive !== currentTarget;
@@ -120,7 +124,7 @@ export function useSortableReorder<
     event.stopPropagation();
     const item = event.currentTarget.closest<HTMLElement>(options.itemSelector);
     if (!item) return;
-    const captureTarget = event.target instanceof Element
+    const captureTarget = isElementNode(event.target)
       ? event.target.closest(SORTABLE_SURFACE_SELECTOR) ?? event.currentTarget
       : event.currentTarget;
     captureTarget.setPointerCapture(event.pointerId);
