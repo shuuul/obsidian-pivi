@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.34.0](https://github.com/shuuul/obsidian-pivi/compare/0.33.0...0.34.0) (2026-11-28)
+
+### Bug Fixes
+
+* keep vault skill updates from replacing manually added or locally edited skills when upstream removes or renames folders, and apply lock-key changes only after a successful import
+
+### Maintenance
+
+* update the pinned Pi runtime to 1.7.0 with its latest model catalogs
+* update the bundled Skills CLI to 1.7.6; stay on the 1.7 line because 1.8+ lock migrations can discard staged local edits
+* refresh maintenance tooling and Node type definitions
+
 ## [0.33.0](https://github.com/shuuul/obsidian-pivi/compare/0.32.2...0.33.0) (2026-11-22)
 
 ### Features
