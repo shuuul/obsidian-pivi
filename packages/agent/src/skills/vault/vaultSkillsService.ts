@@ -16,6 +16,7 @@ import {
   type SkillsPublicationMetadata,
   type SkillTransactionHooks as TransactionPublicationHooks,
 } from './skillPublicationTransaction';
+import { importCliSkills } from './skillsCliImport';
 import {
   publishValidatedSkillTree,
   SkillStageValidationError,
@@ -60,8 +61,6 @@ export interface RemoteSkillEntry {
 
 
 const SKILLS_INSTALL_TIMEOUT_MS = 120_000;
-
-const SKILLS_STAGING_ROOT = path.join('.pivi', 'skills-staging');
 
 const SKILLS_CLI_METADATA_FILES = ['skills-lock.json', '.skills.json'] as const;
 
@@ -147,57 +146,7 @@ function ensurePiviSkillsDir(vaultPath: string): string {
   return dir;
 }
 
-function copySkillTree(
-  sourceDir: string,
-  folderName: string,
-  dest: string,
-  existingBefore: Set<string>,
-  installed: string[],
-  vaultPath: string,
-  overwriteFolders?: ReadonlySet<string>,
-): boolean {
-  const destDir = path.join(dest, folderName);
-  if (path.resolve(sourceDir) === path.resolve(destDir)) {
-    const overwrite = overwriteFolders?.has(folderName) ?? false;
-    if (!overwrite && existingBefore.has(folderName)) {
-      return false;
-    }
-    if (!installed.includes(folderName)) {
-      installed.push(folderName);
-    }
-    return true;
-  }
-
-  const overwrite = overwriteFolders?.has(folderName) ?? false;
-  if (!overwrite && (fs.existsSync(destDir) || existingBefore.has(folderName))) {
-    return false;
-  }
-
   const stagingRoot = path.join(vaultPath, SKILLS_STAGING_ROOT, `sync-${process.pid}-${Date.now()}`);
-  try {
-    const stagedDir = stageSkillTreeFromSource(sourceDir, stagingRoot, folderName);
-    publishValidatedSkillTree({
-      stagedDir,
-      destinationDir: dest,
-      folderName,
-      preserveDisabledMarker: true,
-    });
-    if (!installed.includes(folderName)) {
-      installed.push(folderName);
-    }
-    return true;
-  } catch (error) {
-    if (error instanceof SkillStageValidationError) {
-      throw error;
-    }
-    throw error;
-  } finally {
-    if (fs.existsSync(stagingRoot)) {
-      fs.rmSync(stagingRoot, { recursive: true, force: true });
-    }
-  }
-}
-
 export class VaultSkillsService {
   private static readonly publicationTails = new Map<string, Promise<void>>();
   private cleanupFailurePending = false;
@@ -285,7 +234,7 @@ export class VaultSkillsService {
         afterPublish: options?.afterPublish,
         metadata: options?.metadata,
       },
-      async (operationRoot) => {
+      async (operationRoot, context) => {
         await this.runSkillsAdd(source, skillNames, operationRoot, options?.signal);
         const synced = this.importOperationSkills(operationRoot, before, undefined, operationRoot);
         if (synced.length === 0) {
@@ -391,7 +340,7 @@ export class VaultSkillsService {
     return this.runIsolatedPublication(
       'update',
       publicationHooks,
-      async operationRoot => {
+      async (operationRoot, context) => {
         await this.runSkillsUpdate([normalizedSkillName], operationRoot, signal);
         return this.importOperationSkills(operationRoot, new Set(), new Set([safeFolderName]), operationRoot);
       },
@@ -493,7 +442,8 @@ export class VaultSkillsService {
   private async runIsolatedPublication<T>(
     name: string,
     hooks: SkillsPublicationHooks | (() => void) | undefined,
-    operation: (root: string) => Promise<T>,
+    operation: (root: string, context: SkillsCliOperationContext) => Promise<T>,
+    mirrorCli = true,
   ): Promise<T> {
     const publicationHooks: TransactionPublicationHooks = typeof hooks === 'function'
       ? { beforePublish: hooks }
@@ -535,34 +485,7 @@ export class VaultSkillsService {
       }
     }
   }
-
-  private importOperationSkills(
-    operationRoot: string,
-    existingBefore: Set<string>,
-    overwriteFolders?: ReadonlySet<string>,
-    destinationVaultPath = this.vaultPath,
-  ): string[] {
-    const dest = ensurePiviSkillsDir(destinationVaultPath);
-    const installed: string[] = [];
-    // Only roots beneath this unique cwd can be attributable to this invocation.
-    for (const relativeRoot of ['.agents/skills', '.cursor/skills', 'skills']) {
-      const sourceRoot = path.join(operationRoot, relativeRoot);
-      if (!fs.existsSync(sourceRoot)) continue;
-      for (const entry of fs.readdirSync(sourceRoot, { withFileTypes: true })) {
-        if (!entry.isDirectory()) continue;
-        const candidates = [path.join(sourceRoot, entry.name)];
-        const nested = path.join(sourceRoot, entry.name, 'skills');
-        if (fs.existsSync(nested)) {
           candidates.push(...fs.readdirSync(nested).map(name => path.join(nested, name)));
-        }
-        for (const candidate of candidates) {
-          if (!fs.existsSync(path.join(candidate, 'SKILL.md'))) continue;
-          const folderName = path.basename(candidate);
           copySkillTree(candidate, folderName, dest, existingBefore, installed, destinationVaultPath, overwriteFolders);
-        }
-      }
-    }
-    return installed;
-  }
 
 }

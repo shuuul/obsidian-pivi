@@ -267,6 +267,15 @@ describe('VaultSkillsService sync', () => {
         };
       }),
     };
+    for (const folderName of ['first', 'second']) {
+      const skillDir = path.join(vaultPath, '.pivi', 'skills', folderName);
+      fs.mkdirSync(skillDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(skillDir, 'SKILL.md'),
+        '---\nname: old\ndescription: old\n---\n',
+        'utf-8',
+      );
+    }
     const first = new VaultSkillsService(vaultPath, {
       processRunner: firstRunner,
       processEnv,
@@ -599,6 +608,21 @@ describe('VaultSkillsService sync', () => {
     const existing = path.join(vaultPath, '.pivi', 'skills', 'existing');
     fs.mkdirSync(existing, { recursive: true });
     fs.writeFileSync(path.join(existing, 'SKILL.md'), '---\nname: old\ndescription: old\n---\n', 'utf-8');
+    fs.writeFileSync(
+      path.join(vaultPath, '.pivi', 'skills-lock.json'),
+      JSON.stringify({
+        version: 1,
+        skills: {
+          old: {
+            skillPath: 'SKILL.md',
+            source: 'repo',
+            ref: 'main',
+            computedHash: 'old',
+          },
+        },
+      }),
+      'utf-8',
+    );
     const calls: ProcessRunRequest[] = [];
     const processRunner: ProcessRunner = {
       run: jest.fn(async (request) => {
@@ -622,6 +646,70 @@ describe('VaultSkillsService sync', () => {
     expect(calls[0]?.executable.toLowerCase()).toContain('node');
     expect(calls[0]?.args?.[0]).toMatch(/[/\\]bin[/\\]cli\.mjs$/);
     expectPinnedSkillsInvocation(calls[0], ['update', '-p', '-y']);
+    expect(fs.readFileSync(path.join(existing, 'SKILL.md'), 'utf-8')).toContain('name: new');
+    expect(fs.existsSync(path.join(vaultPath, '.pivi', 'skills', 'renamed'))).toBe(false);
+    const publishedLock = JSON.parse(
+      fs.readFileSync(path.join(vaultPath, '.pivi', 'skills-lock.json'), 'utf-8'),
+    ) as { skills: Record<string, unknown> };
+    expect(Object.keys(publishedLock.skills)).toEqual(['new']);
+
+    fs.appendFileSync(path.join(existing, 'SKILL.md'), 'local edit\n', 'utf-8');
+    const secondRunner: ProcessRunner = {
+      run: jest.fn(async () => {
+        return {
+          termination: 'exit' as const,
+          exitCode: 0,
+          signal: null,
+          stdout: '',
+          stderr: '',
+          stdoutTruncated: false,
+          stderrTruncated: false,
+        };
+      }),
+    };
+    const secondService = new VaultSkillsService(vaultPath, {
+      processRunner: secondRunner,
+      processEnv,
+      skillsCliPackageRoot,
+    });
+    await expect(secondService.updateAll()).resolves.toEqual([]);
+    expect(fs.readFileSync(path.join(existing, 'SKILL.md'), 'utf-8')).toContain('local edit');
+
+    const thirdRunner: ProcessRunner = {
+      run: jest.fn(async (request) => {
+        writeCliSkill('new', 'new', request.cwd);
+        fs.writeFileSync(
+          path.join(request.cwd!, 'skills-lock.json'),
+          JSON.stringify({
+            version: 1,
+            skills: {
+              new: {
+                skillPath: 'SKILL.md',
+                source: 'repo',
+                ref: 'main',
+                computedHash: 'newer',
+              },
+            },
+          }),
+          'utf-8',
+        );
+        return {
+          termination: 'exit' as const,
+          exitCode: 0,
+          signal: null,
+          stdout: '',
+          stderr: '',
+          stdoutTruncated: false,
+          stderrTruncated: false,
+        };
+      }),
+    };
+    const thirdService = new VaultSkillsService(vaultPath, {
+      processRunner: thirdRunner,
+      processEnv,
+      skillsCliPackageRoot,
+    });
+    await expect(thirdService.updateAll()).resolves.toEqual(['existing']);
     expect(fs.readFileSync(path.join(existing, 'SKILL.md'), 'utf-8')).toContain('name: new');
   });
 
@@ -667,6 +755,7 @@ describe('VaultSkillsService sync', () => {
         calls.push(request);
         writeCliSkill('obsidian-markdown', 'markdown', request.cwd);
         writeCliSkill('json-canvas', 'canvas', request.cwd);
+        writeCliSkill('obsidian-cli', 'cli', request.cwd);
         return {
           termination: 'exit' as const,
           exitCode: 0,
@@ -689,6 +778,7 @@ describe('VaultSkillsService sync', () => {
     expect(calls[0]?.args?.[0]).toMatch(/[/\\]bin[/\\]cli\.mjs$/);
     expectPinnedSkillsInvocation(calls[0], ['add', 'kepano/obsidian-skills', '--copy', '-y']);
     expect(fs.readFileSync(path.join(existing, 'SKILL.md'), 'utf-8')).toContain('name: markdown');
+    expect(fs.existsSync(path.join(vaultPath, '.pivi', 'skills', 'obsidian-cli'))).toBe(false);
   });
 
   it('reports skills CLI failures from the injected process runner', async () => {
